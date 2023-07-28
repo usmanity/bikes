@@ -1,0 +1,71 @@
+[
+  {
+    "id": 1,
+    "name": "Rooted",
+    "brand": "Tenways",
+    "model": "CGO 600",
+    "initialPrice": 1700,
+    "photo": "/photos/tenways.jpeg",
+    "acquireDate": "2022-12-25T21:36:32.463Z",
+    "bikeType": "e-bike",
+    "milesAtAcquire": 0,
+    "createdAt": "2023-07-28T20:46:44.018Z",
+    "updatedAt": "2023-07-28T22:47:08.547Z",
+    "description": "This is one my favorite bikes because the electric motor helps me ride a lot more!",
+    "MileageUpdate": [
+      {
+        "id": 1,
+        "bikeId": 1,
+        "mileage": 280,
+        "createdAt": "2023-07-28T21:57:13.720Z",
+        "updatedAt": "2023-07-28T21:56:58.582Z"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Kiwi Maddog",
+    "brand": "Specialized",
+    "model": "Sirrus X 2019",
+    "initialPrice": 1499.99,
+    "photo": null,
+    "acquireDate": "2019-06-12T20:46:44.018Z",
+    "bikeType": "road",
+    "milesAtAcquire": 0,
+    "createdAt": "2023-07-28T21:36:32.463Z",
+    "updatedAt": "2023-07-28T22:47:08.547Z",
+    "description": "I use this bike for exercise.",
+    "MileageUpdate": [
+      {
+        "id": 3,
+        "bikeId": 2,
+        "mileage": 240,
+        "createdAt": "2023-07-28T22:48:30.895Z",
+        "updatedAt": "2023-07-28T22:48:21.853Z"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Baby Moto",
+    "brand": "Surron",
+    "model": "Light Bee X",
+    "initialPrice": 5500,
+    "photo": null,
+    "acquireDate": "2023-07-18T21:36:32.463Z",
+    "bikeType": "motorcycle",
+    "milesAtAcquire": 1,
+    "createdAt": "2023-07-28T21:47:07.506Z",
+    "updatedAt": "2023-07-28T22:47:08.547Z",
+    "description": "My most recent bike, this thing is great for dirt trails.",
+    "MileageUpdate": [
+      {
+        "id": 2,
+        "bikeId": 3,
+        "mileage": 12,
+        "createdAt": "2023-07-28T22:48:20.639Z",
+        "updatedAt": "2023-07-28T22:48:11.021Z"
+      }
+    ]
+  }
+]

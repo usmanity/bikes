@@ -1,0 +1,25 @@
+-- AlterTable
+ALTER TABLE "Bike" ADD COLUMN "photo" TEXT;
+
+-- CreateTable
+CREATE TABLE "MileageUpdate" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "bikeId" INTEGER NOT NULL,
+    "mileage" REAL NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "MileageUpdate_bikeId_fkey" FOREIGN KEY ("bikeId") REFERENCES "Bike" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Component" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "brand" TEXT NOT NULL,
+    "cost" REAL NOT NULL,
+    "bikeId" INTEGER NOT NULL,
+    "milesAtInstall" REAL NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Component_bikeId_fkey" FOREIGN KEY ("bikeId") REFERENCES "Bike" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
