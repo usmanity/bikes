@@ -67,5 +67,28 @@
         "updatedAt": "2023-07-28T22:48:11.021Z"
       }
     ]
+  },
+  {
+    "id": 4,
+    "name": "Big Red",
+    "brand": "Specialized",
+    "model": "Allez",
+    "initialPrice": 1250,
+    "photo": null,
+    "acquireDate": "2012-06-25T21:36:32.463Z",
+    "bikeType": "road",
+    "milesAtAcquire": 0,
+    "createdAt": "2023-07-28T22:57:06.717Z",
+    "updatedAt": "2023-07-28T22:56:12.608Z",
+    "description": null,
+    "MileageUpdate": [
+      {
+        "id": 4,
+        "bikeId": 4,
+        "mileage": 1448,
+        "createdAt": "2023-07-28T22:58:16.644Z",
+        "updatedAt": "2023-07-28T22:58:08.842Z"
+      }
+    ]
   }
 ]

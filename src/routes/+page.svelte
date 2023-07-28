@@ -10,7 +10,7 @@
 
 
 <div class="bg-gray-50">
-  <div class="mx-auto max-w-2xl pt-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
+  <div class="mx-auto max-w-2xl pt-12 sm:px-6 sm:py-16 lg:max-w-7xl lg:px-8">
     <div class="space-y-2 px-4 sm:flex sm:items-baseline sm:justify-between sm:space-y-0 sm:px-0">
       <div class="flex sm:items-baseline sm:space-x-4">
         <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Bikes</h1>
