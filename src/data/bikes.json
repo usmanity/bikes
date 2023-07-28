@@ -5,12 +5,12 @@
     "brand": "Tenways",
     "model": "CGO 600",
     "initialPrice": 1700,
-    "photo": "/photos/tenways.jpeg",
+    "photo": "photos/tenways.jpeg",
     "acquireDate": "2022-12-25T21:36:32.463Z",
     "bikeType": "e-bike",
     "milesAtAcquire": 0,
     "createdAt": "2023-07-28T20:46:44.018Z",
-    "updatedAt": "2023-07-28T22:47:08.547Z",
+    "updatedAt": "2023-07-28T23:14:41.231Z",
     "description": "This is one my favorite bikes because the electric motor helps me ride a lot more!",
     "MileageUpdate": [
       {
