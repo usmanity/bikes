@@ -167,15 +167,37 @@
     "Event": [],
     "Component": [
       {
+        "id": 11,
+        "name": "Goggles",
+        "brand": "100%",
+        "cost": 100,
+        "bikeId": 3,
+        "milesAtInstall": 0,
+        "installationDate": "1970-01-01T00:00:00.000Z",
+        "createdAt": "2023-07-29T22:11:54.700Z",
+        "updatedAt": "2023-07-29T22:10:55.027Z"
+      },
+      {
+        "id": 12,
+        "name": "Chain cleaner, shirt, pants",
+        "brand": "Various",
+        "cost": 132.92,
+        "bikeId": 3,
+        "milesAtInstall": 0,
+        "installationDate": "1970-01-01T00:00:00.000Z",
+        "createdAt": "2023-07-29T22:11:54.700Z",
+        "updatedAt": "2023-07-29T22:11:19.135Z"
+      },
+      {
         "id": 9,
         "name": "Helmet",
         "brand": "Fox",
-        "cost": 232.92,
+        "cost": 211.18,
         "bikeId": 3,
         "milesAtInstall": 1,
         "installationDate": "2023-07-18T00:00:00.000Z",
         "createdAt": "2023-07-29T01:53:48.978Z",
-        "updatedAt": "2023-07-29T01:53:10.464Z"
+        "updatedAt": "2023-07-29T22:10:54.390Z"
       },
       {
         "id": 2,
