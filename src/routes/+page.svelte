@@ -39,9 +39,9 @@
 
         <div class="mt-6 sm:ml-6 sm:mt-0">
           <h3 class="text-base font-medium text-gray-900">
-            {bike.name}
+            {bike.brand} {bike.model}
           </h3>
-          <p class="mt-2 text-sm font-medium text-gray-900">{bike.brand} {bike.model}</p>
+          <p class="mt-2 text-sm font-medium text-gray-900">“{bike.name}”</p>
           <p class="mt-3 text-sm text-gray-500">{bike.description}</p>
         </div>
       </div>
