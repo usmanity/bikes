@@ -25,6 +25,17 @@
     "Event": [],
     "Component": [
       {
+        "id": 10,
+        "name": "Rack",
+        "brand": "Ibera",
+        "cost": 39.99,
+        "bikeId": 1,
+        "milesAtInstall": 0,
+        "installationDate": "2022-12-30T00:00:00.000Z",
+        "createdAt": "2023-07-29T01:57:04.689Z",
+        "updatedAt": "2023-07-29T01:56:23.910Z"
+      },
+      {
         "id": 6,
         "name": "Cargo net",
         "brand": "JCHL",
