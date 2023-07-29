@@ -12,6 +12,7 @@
     "createdAt": "2023-07-28T20:46:44.018Z",
     "updatedAt": "2023-07-28T23:14:41.231Z",
     "description": "This is one my favorite bikes because the electric motor helps me ride a lot more!",
+    "status": "active",
     "MileageUpdate": [
       {
         "id": 1,
@@ -19,6 +20,20 @@
         "mileage": 280,
         "createdAt": "2023-07-28T21:57:13.720Z",
         "updatedAt": "2023-07-28T21:56:58.582Z"
+      }
+    ],
+    "Event": [],
+    "Component": [
+      {
+        "id": 1,
+        "name": "Stamp 1 Pedals",
+        "brand": "Crankbrotherrs",
+        "cost": 40.99,
+        "bikeId": 1,
+        "milesAtInstall": 125,
+        "installationDate": "2023-06-30T00:00:00.000Z",
+        "createdAt": "2023-07-29T01:11:22.538Z",
+        "updatedAt": "2023-07-29T01:11:42.713Z"
       }
     ]
   },
@@ -28,13 +43,14 @@
     "brand": "Specialized",
     "model": "Sirrus X 2019",
     "initialPrice": 1499.99,
-    "photo": null,
+    "photo": "photos/sirrusx.webp",
     "acquireDate": "2019-06-12T20:46:44.018Z",
     "bikeType": "road",
     "milesAtAcquire": 0,
     "createdAt": "2023-07-28T21:36:32.463Z",
-    "updatedAt": "2023-07-28T22:47:08.547Z",
+    "updatedAt": "2023-07-29T01:14:45.625Z",
     "description": "I use this bike for exercise.",
+    "status": "active",
     "MileageUpdate": [
       {
         "id": 3,
@@ -43,44 +59,50 @@
         "createdAt": "2023-07-28T22:48:30.895Z",
         "updatedAt": "2023-07-28T22:48:21.853Z"
       }
-    ]
+    ],
+    "Event": [],
+    "Component": []
   },
   {
     "id": 3,
     "name": "Baby Moto",
-    "brand": "Surron",
-    "model": "Light Bee X",
+    "brand": "Sur-Ron X",
+    "model": "Light Bee",
     "initialPrice": 5500,
-    "photo": null,
+    "photo": "photos/surron.jpg",
     "acquireDate": "2023-07-18T21:36:32.463Z",
     "bikeType": "motorcycle",
     "milesAtAcquire": 1,
     "createdAt": "2023-07-28T21:47:07.506Z",
-    "updatedAt": "2023-07-28T22:47:08.547Z",
+    "updatedAt": "2023-07-29T01:04:17.138Z",
     "description": "My most recent bike, this thing is great for dirt trails.",
+    "status": "active",
     "MileageUpdate": [
       {
-        "id": 2,
+        "id": 5,
         "bikeId": 3,
-        "mileage": 12,
-        "createdAt": "2023-07-28T22:48:20.639Z",
-        "updatedAt": "2023-07-28T22:48:11.021Z"
+        "mileage": 25,
+        "createdAt": "2023-07-29T00:48:19.243Z",
+        "updatedAt": "2023-07-29T00:48:08.476Z"
       }
-    ]
+    ],
+    "Event": [],
+    "Component": []
   },
   {
     "id": 4,
     "name": "Big Red",
     "brand": "Specialized",
-    "model": "Allez",
+    "model": "Allez Comp 105",
     "initialPrice": 1250,
-    "photo": null,
-    "acquireDate": "2012-06-25T21:36:32.463Z",
+    "photo": "photos/bigred.jpg",
+    "acquireDate": "2012-12-01T21:36:32.463Z",
     "bikeType": "road",
     "milesAtAcquire": 0,
     "createdAt": "2023-07-28T22:57:06.717Z",
-    "updatedAt": "2023-07-28T22:56:12.608Z",
-    "description": null,
+    "updatedAt": "2023-07-29T01:05:01.201Z",
+    "description": "This was my first road bike, I commuted and exercised using this bike.",
+    "status": "retired",
     "MileageUpdate": [
       {
         "id": 4,
@@ -89,6 +111,18 @@
         "createdAt": "2023-07-28T22:58:16.644Z",
         "updatedAt": "2023-07-28T22:58:08.842Z"
       }
-    ]
+    ],
+    "Event": [
+      {
+        "id": 1,
+        "name": "Sold",
+        "date": "2020-01-01T00:00:00.000Z",
+        "bikeId": 4,
+        "cost": -900,
+        "createdAt": "2023-07-29T01:02:23.300Z",
+        "updatedAt": "2023-07-29T01:02:43.521Z"
+      }
+    ],
+    "Component": []
   }
 ]

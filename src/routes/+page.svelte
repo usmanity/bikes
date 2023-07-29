@@ -1,10 +1,20 @@
 <script>
     /** @type {import('./$types').PageData} */    export let data;
     function perMileCost(bike) {
-      const totalCost = bike.initialPrice; // TODO more here
       const latestMiles = bike.MileageUpdate[0].mileage;
+      
       const milesSinceAcquire = latestMiles - bike.milesAtAcquire;
-      return (totalCost / milesSinceAcquire).toFixed(2);
+      return (totalCost(bike) / milesSinceAcquire).toFixed(2);
+    }
+
+    function totalCost(bike) {
+      const eventsCost = bike.Event.reduce((acc, event) => {
+        return acc + event.cost;
+      }, 0);
+      const componentsCost = bike.Component.reduce((acc, component) => {
+        return acc + component.cost;
+      }, 0);
+      return bike.initialPrice + eventsCost + componentsCost;
     }
 </script>
 
@@ -23,7 +33,7 @@
   <div class="border-b border-t border-gray-200 bg-white shadow-sm sm:rounded-lg sm:border">
     <div class="px-4 py-6 sm:px-6 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:p-8">
       <div class="sm:flex lg:col-span-7">
-        <div class="aspect-h-1 aspect-w-1 w-full flex-shrink-0 overflow-hidden rounded-lg sm:aspect-none sm:h-40 sm:w-40">
+        <div class="aspect-video w-full flex-shrink-0 overflow-hidden rounded-lg sm:aspect-none sm:w-64">
           <img src="{bike.photo}" alt="A photo of my {bike.brand} bike" class="h-full w-full object-cover object-center sm:h-full sm:w-full">
         </div>
 
@@ -41,8 +51,8 @@
           <div>
             <dt class="font-medium text-gray-900">Costs</dt>
             <dd class="mt-3 text-gray-500">
-              <span class="block">Initial: ${bike.initialPrice.toFixed(2)}</span>
-              <span class="block">Total estimate: TODO</span>
+              <span class="block">Initial: ${bike.initialPrice}</span>
+              <span class="block">Total estimate: ${totalCost(bike).toFixed(2)}</span>
               <span class="block">Per mile: ${perMileCost(bike)}</span>
             </dd>
           </div>
@@ -57,21 +67,6 @@
       </div>
     </div>
 
-    <!-- <div class="border-t border-gray-200 px-4 py-6 sm:px-6 lg:p-8">
-      <h4 class="sr-only">Status</h4>
-      <p class="text-sm font-medium text-gray-900">Preparing to ship on <time datetime="2021-03-24">March 24, 2021</time></p>
-      <div class="mt-6" aria-hidden="true">
-        <div class="overflow-hidden rounded-full bg-gray-200">
-          <div class="h-2 rounded-full bg-indigo-600" style="width: calc((1 * 2 + 1) / 8 * 100%)"></div>
-        </div>
-        <div class="mt-6 hidden grid-cols-4 text-sm font-medium text-gray-600 sm:grid">
-          <div class="text-indigo-600">Order placed</div>
-          <div class="text-center text-indigo-600">Processing</div>
-          <div class="text-center">Shipped</div>
-          <div class="text-right">Delivered</div>
-        </div>
-      </div>
-    </div> -->
   </div>
   {/each}
 </div>

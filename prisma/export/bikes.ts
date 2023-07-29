@@ -11,6 +11,16 @@ async function exportBikesData() {
           createdAt: 'desc'
         },
         take: 1,
+      },
+      Event: {
+        orderBy: {
+          createdAt: 'desc'
+        },
+      },
+      Component: {
+        orderBy: {
+          createdAt: 'desc'
+        },
       }
     }
   }))

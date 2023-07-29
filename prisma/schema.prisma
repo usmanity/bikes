@@ -23,8 +23,10 @@ model Bike {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   description    String?
+  status         String          @default("active")
   MileageUpdate  MileageUpdate[]
   Component      Component[]
+  Event          Event[]
 }
 
 model MileageUpdate {
@@ -47,4 +49,15 @@ model Component {
   installationDate DateTime
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model Event {
+  id        Int      @id @default(autoincrement())
+  name      String
+  date      DateTime
+  bike      Bike     @relation(fields: [bikeId], references: [id])
+  bikeId    Int
+  cost      Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
