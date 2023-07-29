@@ -156,6 +156,17 @@
     "Event": [],
     "Component": [
       {
+        "id": 9,
+        "name": "Helmet",
+        "brand": "Fox",
+        "cost": 232.92,
+        "bikeId": 3,
+        "milesAtInstall": 1,
+        "installationDate": "2023-07-18T00:00:00.000Z",
+        "createdAt": "2023-07-29T01:53:48.978Z",
+        "updatedAt": "2023-07-29T01:53:10.464Z"
+      },
+      {
         "id": 2,
         "name": "Gloves, boots, knee protection",
         "brand": "Various",
