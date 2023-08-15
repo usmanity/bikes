@@ -15,11 +15,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 14,
+        "id": 18,
         "bikeId": 1,
-        "mileage": 303,
-        "createdAt": "2023-08-11T04:37:29.304Z",
-        "updatedAt": "2023-08-11T04:37:19.735Z"
+        "mileage": 323,
+        "createdAt": "2023-08-15T22:03:31.964Z",
+        "updatedAt": "2023-08-15T22:03:22.331Z"
       }
     ],
     "Event": [],
