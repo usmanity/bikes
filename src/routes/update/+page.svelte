@@ -85,7 +85,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 min-h-screen p-4 text-white">
+	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 p-4 text-white">
 		<div class="mx-auto px-4">
 			<h2 class="text-base font-semibold leading-6">Update this bike</h2>
 
@@ -202,5 +202,11 @@
 				</li>
 			</ul>
 		</div>
+	</div>
+	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 min-h-screen p-4 text-white">
+		<div class="mx-auto px-4">Mileage Updates</div>
+		<ul>
+			<li />
+		</ul>
 	</div>
 </div>
