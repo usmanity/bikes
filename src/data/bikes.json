@@ -22,7 +22,17 @@
         "updatedAt": "2023-08-15T22:03:22.331Z"
       }
     ],
-    "Event": [],
+    "Event": [
+      {
+        "id": 2,
+        "name": "Saddle Library Membership",
+        "date": "2023-08-16T21:00:33.045Z",
+        "bikeId": 1,
+        "cost": 30,
+        "createdAt": "2023-08-16T21:00:33.046Z",
+        "updatedAt": "2023-08-16T21:00:33.046Z"
+      }
+    ],
     "Component": [
       {
         "id": 13,
@@ -179,11 +189,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 16,
+        "id": 20,
         "bikeId": 3,
-        "mileage": 58,
-        "createdAt": "2023-08-15T17:57:27.728Z",
-        "updatedAt": "2023-08-15T17:57:15.396Z"
+        "mileage": 60,
+        "createdAt": "2023-08-16T18:18:01.925Z",
+        "updatedAt": "2023-08-16T18:18:01.925Z"
       }
     ],
     "Event": [],
