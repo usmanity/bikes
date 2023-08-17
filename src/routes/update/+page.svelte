@@ -145,14 +145,14 @@
 			</div>
 		</div>
 	</div>
-	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 p-4 text-white">
-		<div class="py-6">
+	<div class="mx-auto max-w-full ml-72 bg-gray-800 text-white">
+		<div class="p-4 pt-8 border-t border-gray-700 shadow-inner">
 			<div class="mx-auto max-w-7xl">
 				<dl class="grid grid-cols-1 gap-x-4 gap-y-4 text-center lg:grid-cols-3">
 					<div class="mx-auto flex max-w-xs flex-col gap-y-4">
 						<dt class="text-base leading-7 text-gray-200">Miles ridden</dt>
 						<dd class="order-first text-xl font-semibold tracking-tight text-gray-100 sm:text-3xl">
-							{currentBike.MileageUpdate[currentBike.MileageUpdate.length - 1].mileage}
+							{currentBike.MileageUpdate[0].mileage}
 						</dd>
 					</div>
 					<div class="mx-auto flex max-w-xs flex-col gap-y-4">
@@ -171,13 +171,13 @@
 			</div>
 		</div>
 	</div>
-	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 p-4 text-white">
-		<div class="mx-auto px-4">
-			<h2 class="text-base font-semibold leading-6">Update this bike</h2>
+	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 text-white">
+		<div class="mx-auto">
+			<h2 class="text-base font-semibold leading-6 px-7 pt-4">Update this bike</h2>
 
 			<ul
 				role="list"
-				class="mt-6 grid grid-cols-1 gap-6 border-b border-t border-gray-600 py-6 sm:grid-cols-3"
+				class="px-7 grid grid-cols-1 gap-6 border-b border-gray-600 py-6 sm:grid-cols-3"
 			>
 				<li class="flow-root">
 					<div

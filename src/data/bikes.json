@@ -24,6 +24,15 @@
     ],
     "Event": [
       {
+        "id": 5,
+        "name": "Recieved replacement battery",
+        "date": "2023-08-17T06:17:38.049Z",
+        "bikeId": 1,
+        "cost": 0,
+        "createdAt": "2023-08-17T06:17:38.051Z",
+        "updatedAt": "2023-08-17T06:17:38.051Z"
+      },
+      {
         "id": 2,
         "name": "Saddle Library Membership",
         "date": "2023-08-16T21:00:33.045Z",
