@@ -1,7 +1,13 @@
 <script>
+	import { browser } from '$app/environment';
+	import { totalCost, perMileCost } from '$lib/bike';
 	export let data;
-
-	let currentBike = data.bikes[0];
+	let urlParams;
+	if (browser) {
+		urlParams = new URLSearchParams(window.location.search);
+	}
+	let bikeId = urlParams?.get('bikeId') || 1;
+	let currentBike = data.bikes[bikeId - 1];
 	let showMileageModal = false;
 	let newMiles = 0;
 	let showComponentModal;
@@ -14,7 +20,7 @@
 	}
 
 	function deleteComponent(id) {
-		fetch(`?/deleteComponent&id=${id}`, {
+		fetch(`?/deleteComponent&id=${id}?bikeId={currentBike.id}`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -28,7 +34,7 @@
 			});
 	}
 	function deleteEvent(id) {
-		fetch(`?/deleteEvent&id=${id}`, {
+		fetch(`?/deleteEvent&id=${id}?bikeId={currentBike.id}`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -43,7 +49,7 @@
 	}
 
 	function deleteMileage(id) {
-		fetch(`?/deleteMileageUpdate&id=${id}`, {
+		fetch(`?/deleteMileageUpdate&id=${id}?bikeId={currentBike.id}`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -136,6 +142,32 @@
 					: 'bg-indigo-400/10 text-indigo-400'}"
 			>
 				{currentBike.status}
+			</div>
+		</div>
+	</div>
+	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 p-4 text-white">
+		<div class="py-6">
+			<div class="mx-auto max-w-7xl">
+				<dl class="grid grid-cols-1 gap-x-4 gap-y-4 text-center lg:grid-cols-3">
+					<div class="mx-auto flex max-w-xs flex-col gap-y-4">
+						<dt class="text-base leading-7 text-gray-200">Miles ridden</dt>
+						<dd class="order-first text-xl font-semibold tracking-tight text-gray-100 sm:text-3xl">
+							{currentBike.MileageUpdate[currentBike.MileageUpdate.length - 1].mileage}
+						</dd>
+					</div>
+					<div class="mx-auto flex max-w-xs flex-col gap-y-4">
+						<dt class="text-base leading-7 text-gray-200">Total cost</dt>
+						<dd class="order-first text-xl font-semibold tracking-tight text-gray-100 sm:text-3xl">
+							${totalCost(currentBike).toFixed(2)}
+						</dd>
+					</div>
+					<div class="mx-auto flex max-w-xs flex-col gap-y-4">
+						<dt class="text-base leading-7 text-gray-200">Cost per mile</dt>
+						<dd class="order-first text-xl font-semibold tracking-tight text-gray-100 sm:text-3xl">
+							${perMileCost(currentBike)}
+						</dd>
+					</div>
+				</dl>
 			</div>
 		</div>
 	</div>
@@ -494,7 +526,7 @@
 		<div>
 			<div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
 				<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-				<form method="POST" action="?/updateMiles">
+				<form method="POST" action="?/updateMiles&bikeId={currentBike.id}">
 					<input type="hidden" name="bikeId" value={currentBike.id} />
 					<div class="fixed inset-0 z-10 overflow-y-auto">
 						<div
@@ -572,7 +604,7 @@
 		<div>
 			<div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
 				<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-				<form method="POST" action="?/addComponent">
+				<form method="POST" action="?/addComponent&bikeId={currentBike.id}">
 					<input type="hidden" name="bikeId" value={currentBike.id} />
 					<div class="fixed inset-0 z-10 overflow-y-auto">
 						<div
@@ -678,7 +710,7 @@
 		<div>
 			<div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
 				<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-				<form method="POST" action="?/addEvent">
+				<form method="POST" action="?/addEvent&bikeId={currentBike.id}">
 					<input type="hidden" name="bikeId" value={currentBike.id} />
 					<div class="fixed inset-0 z-10 overflow-y-auto">
 						<div
