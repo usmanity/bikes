@@ -118,7 +118,7 @@
 			</nav>
 		</div>
 	</div>
-	<div class="mx-auto max-w-7xl ml-72">
+	<div class="mx-auto max-w-full ml-72">
 		<div
 			class="flex flex-col items-start justify-between gap-x-8 gap-y-4 bg-gray-800 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8"
 		>
@@ -171,7 +171,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 text-white">
+	<div class="mx-auto max-w-full ml-72 bg-gray-700 text-white">
 		<div class="mx-auto">
 			<h2 class="text-base font-semibold leading-6 px-7 pt-4">Update this bike</h2>
 
@@ -289,7 +289,7 @@
 			</ul>
 		</div>
 	</div>
-	<div class="mx-auto max-w-7xl ml-72 bg-gray-700 p-4 text-white flex">
+	<div class="mx-auto max-w-full ml-72 bg-gray-700 p-4 text-white flex">
 		<div class="mx-auto max-w-2xl w-full">
 			<div class="mx-auto px-4">Mileage Updates</div>
 			<div class="mt-2 flow-root">
