@@ -15,11 +15,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 28,
+        "id": 32,
         "bikeId": 1,
-        "mileage": 351,
-        "createdAt": "2023-08-28T05:35:12.163Z",
-        "updatedAt": "2023-08-28T05:35:12.163Z"
+        "mileage": 376,
+        "createdAt": "2023-09-07T21:24:04.952Z",
+        "updatedAt": "2023-09-07T21:24:04.952Z"
       }
     ],
     "Event": [
@@ -147,11 +147,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 17,
+        "id": 31,
         "bikeId": 2,
-        "mileage": 257,
-        "createdAt": "2023-08-15T17:57:35.009Z",
-        "updatedAt": "2023-08-15T17:57:50.648Z"
+        "mileage": 261,
+        "createdAt": "2023-09-07T21:23:50.792Z",
+        "updatedAt": "2023-09-07T21:23:50.792Z"
       }
     ],
     "Event": [],
