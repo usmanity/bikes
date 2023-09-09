@@ -53,6 +53,17 @@
     ],
     "Component": [
       {
+        "id": 23,
+        "name": "Bell",
+        "brand": "Rockbros",
+        "cost": 12.59,
+        "bikeId": 1,
+        "milesAtInstall": 376,
+        "installationDate": "2023-09-09T22:17:19.999Z",
+        "createdAt": "2023-09-09T22:17:20.001Z",
+        "updatedAt": "2023-09-09T22:17:20.001Z"
+      },
+      {
         "id": 20,
         "name": "Kickstand",
         "brand": "Tenways",
@@ -218,14 +229,23 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 30,
+        "id": 33,
         "bikeId": 3,
-        "mileage": 102,
-        "createdAt": "2023-09-03T16:59:45.421Z",
-        "updatedAt": "2023-09-03T16:59:45.421Z"
+        "mileage": 121,
+        "createdAt": "2023-09-09T22:17:35.473Z",
+        "updatedAt": "2023-09-09T22:17:35.473Z"
       }
     ],
     "Event": [
+      {
+        "id": 8,
+        "name": "Rode at Browns Trail, Oregon",
+        "date": "2023-09-09T22:18:07.334Z",
+        "bikeId": 3,
+        "cost": 0,
+        "createdAt": "2023-09-09T22:18:07.335Z",
+        "updatedAt": "2023-09-09T22:18:07.335Z"
+      },
       {
         "id": 7,
         "name": "Rode at trail, washed at home",
