@@ -53,6 +53,17 @@
     ],
     "Component": [
       {
+        "id": 24,
+        "name": "Phone Mount (plus case part)",
+        "brand": "Quad Lock",
+        "cost": 55,
+        "bikeId": 1,
+        "milesAtInstall": 424,
+        "installationDate": "2023-09-30T16:19:13.124Z",
+        "createdAt": "2023-09-30T16:19:13.127Z",
+        "updatedAt": "2023-09-30T16:19:13.127Z"
+      },
+      {
         "id": 23,
         "name": "Bell",
         "brand": "Rockbros",
@@ -168,6 +179,17 @@
     "Event": [],
     "Component": [
       {
+        "id": 25,
+        "name": "Phone Mount",
+        "brand": "Quad Lock dupe",
+        "cost": 23,
+        "bikeId": 2,
+        "milesAtInstall": 261,
+        "installationDate": "2023-09-30T16:19:44.850Z",
+        "createdAt": "2023-09-30T16:19:44.851Z",
+        "updatedAt": "2023-09-30T16:19:44.851Z"
+      },
+      {
         "id": 14,
         "name": "Bell",
         "brand": "Spurcycle",
@@ -257,6 +279,17 @@
       }
     ],
     "Component": [
+      {
+        "id": 26,
+        "name": "Phone mount",
+        "brand": "Quad Lock",
+        "cost": 97,
+        "bikeId": 3,
+        "milesAtInstall": 121,
+        "installationDate": "2023-09-30T16:20:15.347Z",
+        "createdAt": "2023-09-30T16:20:15.349Z",
+        "updatedAt": "2023-09-30T16:20:15.349Z"
+      },
       {
         "id": 22,
         "name": "Bluetooth Headset",
