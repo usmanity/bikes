@@ -15,14 +15,23 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 39,
+        "id": 41,
         "bikeId": 1,
-        "mileage": 454,
-        "createdAt": "2023-10-31T19:57:15.463Z",
-        "updatedAt": "2023-10-31T19:57:15.463Z"
+        "mileage": 496,
+        "createdAt": "2024-03-31T05:37:19.184Z",
+        "updatedAt": "2024-03-31T05:37:19.184Z"
       }
     ],
     "Event": [
+      {
+        "id": 9,
+        "name": "Replaced battery from Tenways",
+        "date": "2024-01-02T22:38:59.370Z",
+        "bikeId": 1,
+        "cost": 0,
+        "createdAt": "2024-01-02T22:38:59.371Z",
+        "updatedAt": "2024-01-02T22:38:59.371Z"
+      },
       {
         "id": 6,
         "name": "Stock kickstand became loose",
@@ -52,6 +61,17 @@
       }
     ],
     "Component": [
+      {
+        "id": 27,
+        "name": "Battery",
+        "brand": "Tenways",
+        "cost": 0,
+        "bikeId": 1,
+        "milesAtInstall": 461,
+        "installationDate": "2024-01-02T22:38:40.515Z",
+        "createdAt": "2024-01-02T22:38:40.516Z",
+        "updatedAt": "2024-01-02T22:38:40.516Z"
+      },
       {
         "id": 24,
         "name": "Phone Mount (plus case part)",
@@ -251,11 +271,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 38,
+        "id": 42,
         "bikeId": 3,
-        "mileage": 144,
-        "createdAt": "2023-10-08T22:18:35.767Z",
-        "updatedAt": "2023-10-08T22:18:35.767Z"
+        "mileage": 164,
+        "createdAt": "2024-03-31T05:37:30.218Z",
+        "updatedAt": "2024-03-31T05:37:30.218Z"
       }
     ],
     "Event": [
