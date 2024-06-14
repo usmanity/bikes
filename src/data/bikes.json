@@ -15,11 +15,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 43,
+        "id": 47,
         "bikeId": 1,
-        "mileage": 510,
-        "createdAt": "2024-05-14T22:11:17.949Z",
-        "updatedAt": "2024-05-14T22:11:17.949Z"
+        "mileage": 552,
+        "createdAt": "2024-06-14T01:29:26.871Z",
+        "updatedAt": "2024-06-14T01:29:26.871Z"
       }
     ],
     "Event": [
@@ -189,11 +189,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 44,
+        "id": 46,
         "bikeId": 2,
-        "mileage": 272,
-        "createdAt": "2024-05-14T22:11:25.244Z",
-        "updatedAt": "2024-05-14T22:11:25.244Z"
+        "mileage": 274,
+        "createdAt": "2024-05-25T23:34:36.187Z",
+        "updatedAt": "2024-05-25T23:34:36.187Z"
       }
     ],
     "Event": [],
@@ -271,11 +271,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 45,
+        "id": 48,
         "bikeId": 3,
-        "mileage": 183,
-        "createdAt": "2024-05-14T22:11:31.670Z",
-        "updatedAt": "2024-05-14T22:11:31.670Z"
+        "mileage": 192,
+        "createdAt": "2024-06-14T01:29:34.831Z",
+        "updatedAt": "2024-06-14T01:29:34.831Z"
       }
     ],
     "Event": [
@@ -299,6 +299,17 @@
       }
     ],
     "Component": [
+      {
+        "id": 28,
+        "name": "Water Pack",
+        "brand": "Camelbak",
+        "cost": 0,
+        "bikeId": 3,
+        "milesAtInstall": 192,
+        "installationDate": "2024-06-14T01:29:59.612Z",
+        "createdAt": "2024-06-14T01:29:59.613Z",
+        "updatedAt": "2024-06-14T01:29:59.613Z"
+      },
       {
         "id": 26,
         "name": "Phone mount",
