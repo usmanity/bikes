@@ -271,11 +271,11 @@
     "status": "active",
     "MileageUpdate": [
       {
-        "id": 48,
+        "id": 49,
         "bikeId": 3,
-        "mileage": 192,
-        "createdAt": "2024-06-14T01:29:34.831Z",
-        "updatedAt": "2024-06-14T01:29:34.831Z"
+        "mileage": 220,
+        "createdAt": "2024-06-25T05:07:21.082Z",
+        "updatedAt": "2024-06-25T05:07:21.082Z"
       }
     ],
     "Event": [
@@ -299,6 +299,39 @@
       }
     ],
     "Component": [
+      {
+        "id": 31,
+        "name": "JFG Racing",
+        "brand": "Foot Pegs (red)",
+        "cost": 35.99,
+        "bikeId": 3,
+        "milesAtInstall": 220,
+        "installationDate": "2024-06-25T05:09:07.619Z",
+        "createdAt": "2024-06-25T05:09:07.622Z",
+        "updatedAt": "2024-06-25T05:09:07.622Z"
+      },
+      {
+        "id": 30,
+        "name": "Foot Pegs Support Brace",
+        "brand": "Kemimoto",
+        "cost": 18.99,
+        "bikeId": 3,
+        "milesAtInstall": 220,
+        "installationDate": "2024-06-25T05:08:45.996Z",
+        "createdAt": "2024-06-25T05:08:45.997Z",
+        "updatedAt": "2024-06-25T05:08:45.997Z"
+      },
+      {
+        "id": 29,
+        "name": "Disc Brake Lock",
+        "brand": "Yohoolyo",
+        "cost": 20.99,
+        "bikeId": 3,
+        "milesAtInstall": 220,
+        "installationDate": "2024-06-25T05:08:19.971Z",
+        "createdAt": "2024-06-25T05:08:19.974Z",
+        "updatedAt": "2024-06-25T05:08:19.974Z"
+      },
       {
         "id": 28,
         "name": "Water Pack",
