@@ -16,11 +16,15 @@ dialog {
 	border-radius: 1rem 1rem 0 0;
 }
 
-/* Only when open, or the dialog would be visible while closed. */
+/* The sheet is an ordinary scrolling block with a sticky header and footer,
+   NOT a flex column. A flex child with `flex: 1 1 0%` resolves its basis
+   against the container's height, and this dialog has only a max-height, so
+   that height is indefinite: Chrome falls back to the content size but Safari
+   collapses the child to zero, leaving just the header visible. Scrolling the
+   dialog itself avoids depending on that resolution at all. */
 dialog[open] {
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
 }
 
 @media (min-width: 640px) {

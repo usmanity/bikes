@@ -71,12 +71,20 @@ check "status is constrained" "$(code -X POST "$B/update/bike?k=$KE&bike=1" -d "
 check "bad status fell back"  "$(npx wrangler d1 execute bikes --local --json --command \
   "SELECT status s FROM bikes WHERE id=1" 2>/dev/null | grep -c '"s": "active"')" "1"
 
-# Put every field back, then prove nothing drifted.
-curl -s -o /dev/null -X POST "$B/update/bike?k=$KE&bike=1" -d "$FIELDS&$DESC"
+# Restore through SQL, not the form. Rebuilding a form body means keeping a
+# field list in sync with the form by hand, and this endpoint overwrites every
+# column, so any field the list forgets gets silently blanked.
+node -e "
+const b=JSON.parse(process.argv[1]);
+const cols=['name','brand','model','description','status','bike_type','initial_price','miles_at_acquire','photo','acquire_date'];
+const lit=v=>v===null||v===undefined?'NULL':typeof v==='number'?v:\"'\"+String(v).replace(/'/g,\"''\")+\"'\";
+console.log('UPDATE bikes SET '+cols.map(c=>c+'='+lit(b[c])).join(', ')+' WHERE id=1;')" "$BEFORE_ROW" > /tmp/bikes-restore.sql
+npx wrangler d1 execute bikes --local --yes --file=/tmp/bikes-restore.sql >/dev/null 2>&1
+# Compare every column, so a forgotten field fails the run instead of hiding.
 check "smoke restored the row" "$(node -e "
 const a=JSON.parse(process.argv[1]), b=JSON.parse(process.argv[2]);
-const keys=['name','brand','model','description','status','bike_type','initial_price','miles_at_acquire'];
-console.log(keys.every(k=>String(a[k])===String(b[k]))?'same':'drifted')" "$BEFORE_ROW" "$(snap)")" "same"
+const diff=Object.keys(a).filter(k=>k!=='updated_at'&&String(a[k])!==String(b[k]));
+console.log(diff.length?'drifted: '+diff.join(','):'same')" "$BEFORE_ROW" "$(snap)")" "same"
 
 # --- export seam for ~/projects/data ---
 check "export needs a token"     "$(code "$B/api/export")" "404"

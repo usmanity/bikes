@@ -235,13 +235,13 @@ function list<T extends { id: number }>(
  */
 function sheet(id: string, title: string, action: string, hx: string, fields: string): string {
 	return `<dialog id="${id}" class="border border-zinc-800 bg-zinc-900 p-0 text-zinc-50">
-	<div class="flex shrink-0 items-center justify-between border-b border-zinc-800 px-4 py-3">
+	<div class="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-zinc-900 px-4 py-3">
 		<h3 class="text-sm font-semibold">${title}</h3>
 		<form method="dialog"><button class="flex h-9 w-9 items-center justify-center rounded-md ${MUTED} hover:bg-zinc-800 hover:text-zinc-100" aria-label="Close">${ICON.x}</button></form>
 	</div>
-	<form ${hx} hx-post="${action}" class="flex min-h-0 flex-1 flex-col">
-		<div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">${fields}</div>
-		<div class="shrink-0 border-t border-zinc-800 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+	<form ${hx} hx-post="${action}">
+		<div class="space-y-4 px-4 py-4">${fields}</div>
+		<div class="sticky bottom-0 border-t border-zinc-800 bg-zinc-900 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
 			<button type="submit" class="min-h-11 w-full rounded-lg bg-zinc-50 text-sm font-semibold text-zinc-900 transition-colors hover:bg-white active:bg-zinc-200">Save</button>
 		</div>
 	</form>
