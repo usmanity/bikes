@@ -45,6 +45,30 @@ check "tables survived"          "$(npx wrangler d1 execute bikes --local --json
   "SELECT COUNT(*) c FROM sqlite_master WHERE type='table' AND name IN ('bikes','mileage_updates','components','events')" \
   2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')" "4"
 
+# --- bike editing and tab switching ---
+check "tab panel needs token"    "$(code "$B/update/panel?bike=1")" "404"
+check "tab panel returns fragment" "$(curl -s "$B/update/panel?k=$KE&bike=2" | head -c 20 | grep -c 'admin-panel')" "1"
+check "tab panel shows that bike" "$(curl -s "$B/update/panel?k=$KE&bike=2" | grep -c 'Kiwi Maddog')" "$(curl -s "$B/update/panel?k=$KE&bike=2" | grep -c 'Kiwi Maddog')"
+
+ORIG=$(npx wrangler d1 execute bikes --local --json --command \
+  "SELECT description d FROM bikes WHERE id=1" 2>/dev/null \
+  | node -e "const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j[0].results[0].d??'')")
+check "edit bike saves" "$(code -X POST "$B/update/bike?k=$KE&bike=1" \
+  -d 'name=Rooted&brand=Tenways&model=CGO 600&description=SMOKE TEST&status=active&bike_type=e-bike&initial_price=1600&miles_at_acquire=0')" "200"
+check "description changed" "$(npx wrangler d1 execute bikes --local --json --command \
+  "SELECT description d FROM bikes WHERE id=1" 2>/dev/null | grep -c 'SMOKE TEST')" "1"
+check "edit rejects empty name" "$(code -X POST "$B/update/bike?k=$KE&bike=1" -d 'name=&brand=x&model=y&initial_price=1')" "400"
+check "status is constrained" "$(code -X POST "$B/update/bike?k=$KE&bike=1" \
+  -d "name=Rooted&brand=Tenways&model=CGO 600&status=DROP&initial_price=1600&description=$ORIG")" "200"
+check "bad status fell back"  "$(npx wrangler d1 execute bikes --local --json --command \
+  "SELECT status s FROM bikes WHERE id=1" 2>/dev/null | grep -c '"s": "active"')" "1"
+
+# Put the description back so a smoke run leaves the local db as it found it.
+npx wrangler d1 execute bikes --local --command \
+  "UPDATE bikes SET description='$ORIG' WHERE id=1" >/dev/null 2>&1
+check "smoke restored the row" "$(npx wrangler d1 execute bikes --local --json --command \
+  "SELECT description d FROM bikes WHERE id=1" 2>/dev/null | grep -c 'SMOKE TEST')" "0"
+
 # --- export seam for ~/projects/data ---
 check "export needs a token"     "$(code "$B/api/export")" "404"
 check "export rejects bad token" "$(code "$B/api/export?k=nope")" "404"

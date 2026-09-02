@@ -63,3 +63,40 @@ export type Deletable = keyof typeof DELETABLE;
 export function remove(db: D1Database, kind: Deletable, id: number) {
 	return db.prepare(`DELETE FROM ${DELETABLE[kind]} WHERE id = ?`).bind(id).run();
 }
+
+/** Fields of a bike the update page may change. */
+export interface BikeEdit {
+	name: string;
+	brand: string;
+	model: string;
+	description: string | null;
+	status: string;
+	bike_type: string;
+	initial_price: number;
+	miles_at_acquire: number;
+	photo: string | null;
+	acquire_date: number | null;
+}
+
+export function updateBike(db: D1Database, id: number, b: BikeEdit) {
+	return db
+		.prepare(
+			`UPDATE bikes SET name=?, brand=?, model=?, description=?, status=?, bike_type=?,
+			 initial_price=?, miles_at_acquire=?, photo=?, acquire_date=?, updated_at=unixepoch()
+			 WHERE id=?`
+		)
+		.bind(
+			b.name,
+			b.brand,
+			b.model,
+			b.description,
+			b.status,
+			b.bike_type,
+			b.initial_price,
+			b.miles_at_acquire,
+			b.photo,
+			b.acquire_date,
+			id
+		)
+		.run();
+}

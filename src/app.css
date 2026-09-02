@@ -1,3 +1,48 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Native <dialog> is centred by the UA stylesheet. On phones a bottom sheet is
+   easier to reach one-handed, so anchor it to the bottom edge and only centre
+   it once there is room. */
+dialog {
+	margin: auto auto 0;
+	width: 100%;
+	max-width: 32rem;
+	/* Cap the height so a long form scrolls inside the sheet instead of
+	   pushing its submit button off the top of the screen. */
+	max-height: 88vh;
+	max-height: 88dvh;
+	border-radius: 1rem 1rem 0 0;
+}
+
+/* Only when open, or the dialog would be visible while closed. */
+dialog[open] {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+@media (min-width: 640px) {
+	dialog {
+		margin: auto;
+		border-radius: 0.75rem;
+	}
+}
+
+dialog::backdrop {
+	background: rgb(0 0 0 / 0.6);
+}
+
+/* Let the sheet slide up rather than appear, which reads better on a phone. */
+@media (prefers-reduced-motion: no-preference) {
+	dialog[open] {
+		animation: sheet-in 180ms ease-out;
+	}
+	@keyframes sheet-in {
+		from {
+			transform: translateY(1rem);
+			opacity: 0;
+		}
+	}
+}

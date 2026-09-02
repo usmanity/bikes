@@ -1,171 +1,216 @@
-import type { Bike } from '../db/read.ts';
+import type { Bike, ComponentRow, EventRow, MileageRow } from '../db/read.ts';
 import { totalCost, perMileCost, milesRidden, money, day } from '../cost.ts';
 import { esc, page } from './layout.ts';
 
 /**
- * Every mutation re-renders and swaps this one panel rather than patching
- * individual rows. At four bikes the extra bytes are irrelevant, and it means
- * there is exactly one code path producing the admin markup.
+ * Built phone-first: this is where the bike actually gets updated, usually
+ * one-handed in a garage. Everything is reachable without horizontal scroll,
+ * tap targets are at least 44px, and bike switching lives in a sticky tab bar
+ * rather than the old sidebar, which was hidden entirely below `lg`.
  */
 const PANEL = 'admin-panel';
+
+// shadcn-ish dark tokens, kept in one place so the surfaces stay consistent.
+const CARD = 'rounded-xl border border-zinc-800 bg-zinc-900';
+const MUTED = 'text-zinc-400';
+const BTN =
+	'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-800 active:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400';
 
 export function adminPage(bikes: Bike[], current: Bike, k: string): string {
 	return page(
 		`${current.name} · update`,
-		`<div class="min-h-full bg-gray-800 text-white">
-	<div class="fixed inset-y-0 z-50 hidden w-72 flex-col lg:flex">
-		<div class="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-4">
-			<div class="flex h-16 shrink-0 items-center">
-				<img class="h-8 w-auto" src="/app-icon.svg" alt="Bikes">
-			</div>
-			<nav class="flex flex-1 flex-col">
-				<ul role="list" class="-mx-2 space-y-1">
-					${bikes
-						.map(
-							(b) => `<li><a href="/update?bike=${b.id}&k=${encodeURIComponent(k)}"
-						class="${b.id === current.id ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'} w-full group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold">${esc(b.name)}</a></li>`
-						)
-						.join('')}
-				</ul>
-			</nav>
-		</div>
-	</div>
-	${adminPanel(current, k)}
-</div>`,
+		`<div class="min-h-full bg-zinc-950 text-zinc-50">${adminPanel(bikes, current, k)}</div>`,
 		{ htmx: true }
 	);
 }
 
-export function adminPanel(bike: Bike, k: string): string {
-	const q = `?k=${encodeURIComponent(k)}&bike=${bike.id}`;
-	// Every mutation posts here and replaces this whole element with the response.
+export function adminPanel(bikes: Bike[], current: Bike, k: string): string {
+	const q = `?k=${encodeURIComponent(k)}&bike=${current.id}`;
 	const hx = `hx-target="#${PANEL}" hx-swap="outerHTML"`;
 
-	return `<div id="${PANEL}" class="lg:ml-72">
-	<div class="flex flex-col items-start justify-between gap-x-8 gap-y-4 bg-gray-800 px-4 py-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-		<div>
-			<div class="flex items-center gap-x-3">
-				<div class="flex-none rounded-full bg-green-400 p-1 text-green-400"><div class="h-2 w-2 rounded-full bg-current"></div></div>
-				<h1 class="flex gap-x-3 text-lg leading-7">
-					<span class="font-semibold text-white">${esc(bike.brand)}</span>
-					<span class="text-gray-600">/</span>
-					<span class="font-semibold text-white">${esc(bike.model)}</span>
-				</h1>
+	return `<div id="${PANEL}">
+	<header class="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/85 backdrop-blur">
+		<div class="mx-auto flex max-w-3xl items-center justify-between px-4 pt-3">
+			<span class="text-sm font-semibold tracking-tight">Update</span>
+			<a href="/" class="text-sm ${MUTED} hover:text-zinc-100">View site &rarr;</a>
+		</div>
+		${tabs(bikes, current, k, hx)}
+	</header>
+
+	<main class="mx-auto max-w-3xl space-y-6 px-4 py-5 pb-24">
+		<section class="flex items-start justify-between gap-3">
+			<div class="min-w-0">
+				<div class="flex items-baseline gap-2">
+					<h1 class="truncate text-xl font-semibold tracking-tight">${esc(current.name)}</h1>
+					<span class="shrink-0 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] capitalize ${MUTED}">${esc(current.status)}</span>
+				</div>
+				<p class="mt-1 text-sm ${MUTED}">${esc(current.brand)} ${esc(current.model)}</p>
+				${current.description ? `<p class="mt-2 text-sm ${MUTED}">${esc(current.description)}</p>` : ''}
 			</div>
-			<p class="mt-2 text-sm leading-6 text-gray-400">${esc(bike.description)}</p>
-		</div>
-		<div class="order-first capitalize flex-none rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ring-indigo-400/30 sm:order-none ${
-			bike.status === 'retired' ? 'bg-gray-700 text-gray-300' : 'bg-indigo-400/10 text-indigo-400'
-		}">${esc(bike.status)}</div>
-	</div>
+			<button type="button" onclick="document.getElementById('bike-dlg').showModal()"
+				class="${BTN} shrink-0 px-3">${ICON.pencil}Edit</button>
+		</section>
 
-	<div class="border-t border-gray-700 p-4 pt-8 shadow-inner">
-		<dl class="mx-auto grid max-w-7xl grid-cols-1 gap-4 text-center lg:grid-cols-3">
-			${stat('Miles ridden', milesRidden(bike).toLocaleString())}
-			${stat('Total cost', money(totalCost(bike)))}
-			${stat('Cost per mile', perMileCost(bike))}
-		</dl>
-	</div>
+		<section class="grid grid-cols-3 gap-2">
+			${metric('Miles', milesRidden(current).toLocaleString())}
+			${metric('Total', money(totalCost(current)))}
+			${metric('Per mile', perMileCost(current))}
+		</section>
 
-	<div class="bg-gray-700">
-		<h2 class="px-7 pt-4 text-base font-semibold leading-6">Update this bike</h2>
-		<ul role="list" class="grid grid-cols-1 gap-6 border-b border-gray-600 px-7 py-6 sm:grid-cols-3">
-			${action('mileage-dlg', 'bg-green-500', 'Log mileage')}
-			${action('component-dlg', 'bg-blue-500', 'Add component')}
-			${action('event-dlg', 'bg-amber-500', 'Add event')}
-		</ul>
+		<section class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+			${actionBtn('mileage-dlg', 'Log mileage', ICON.gauge)}
+			${actionBtn('component-dlg', 'Add part', ICON.wrench)}
+			${actionBtn('event-dlg', 'Add event', ICON.calendar)}
+		</section>
 
-		<div class="space-y-8 px-7 py-6">
-			${table('Mileage', ['Reading', 'Logged'], bike.mileage.map((m) => [
-				`${m.mileage.toLocaleString()} mi`,
-				day(m.created_at)
-			]), bike.mileage.map((m) => m.id), 'mileage', q, hx)}
+		${list('Mileage', current.mileage, q, hx, 'mileage', (m: MileageRow) => ({
+			title: `${m.mileage.toLocaleString()} mi`,
+			sub: day(m.created_at),
+			right: ''
+		}))}
 
-			${table('Components', ['Component', 'Brand', 'Cost', 'Installed at'], bike.components.map((c) => [
-				esc(c.name),
-				esc(c.brand),
-				money(c.cost),
-				`${c.miles_at_install.toLocaleString()} mi`
-			]), bike.components.map((c) => c.id), 'component', q, hx)}
+		${list('Components', current.components, q, hx, 'component', (c: ComponentRow) => ({
+			title: esc(c.name),
+			sub: `${esc(c.brand)} &middot; at ${c.miles_at_install.toLocaleString()} mi`,
+			right: money(c.cost)
+		}))}
 
-			${table('Events', ['Event', 'Cost', 'Date'], bike.events.map((e) => [
-				esc(e.name),
-				money(e.cost),
-				day(e.date)
-			]), bike.events.map((e) => e.id), 'event', q, hx)}
-		</div>
-	</div>
+		${list('Events', current.events, q, hx, 'event', (e: EventRow) => ({
+			title: esc(e.name),
+			sub: day(e.date),
+			right: e.cost > 0 ? money(e.cost) : ''
+		}))}
+	</main>
 
-	${dialog('mileage-dlg', 'Log mileage', `/update/mileage${q}`, hx, `
-		${field('miles', 'Odometer reading', 'number', { step: 'any', required: true })}`)}
+	${sheet('bike-dlg', 'Edit bike', `/update/bike${q}`, hx,
+		field('name', 'Name', 'text', { required: true, value: current.name }) +
+		field('brand', 'Brand', 'text', { required: true, value: current.brand }) +
+		field('model', 'Model', 'text', { required: true, value: current.model }) +
+		textarea('description', 'Description', current.description ?? '') +
+		select('status', 'Status', ['active', 'retired'], current.status) +
+		select('bike_type', 'Type', ['road', 'e-bike', 'motorcycle'], current.bike_type) +
+		field('initial_price', 'Initial price', 'number', { step: '0.01', required: true, inputmode: 'decimal', value: String(current.initial_price) }) +
+		field('miles_at_acquire', 'Miles at acquisition', 'number', { step: 'any', inputmode: 'decimal', value: String(current.miles_at_acquire) }) +
+		field('photo', 'Photo path', 'text', { value: current.photo ?? '' }) +
+		field('acquire_date', 'Acquired', 'date', { value: isoDay(current.acquire_date) }))}
 
-	${dialog('component-dlg', 'Add component', `/update/component${q}`, hx, `
-		${field('name', 'Name', 'text', { required: true })}
-		${field('brand', 'Brand', 'text', { required: true })}
-		${field('cost', 'Cost', 'number', { step: '0.01', required: true })}`)}
+	${sheet('mileage-dlg', 'Log mileage', `/update/mileage${q}`, hx,
+		field('miles', 'Odometer reading', 'number', { step: 'any', required: true, inputmode: 'decimal' }))}
 
-	${dialog('event-dlg', 'Add event', `/update/event${q}`, hx, `
-		${field('name', 'What happened', 'text', { required: true })}
-		${field('cost', 'Cost', 'number', { step: '0.01' })}
-		${field('date', 'Date', 'date', {})}`)}
+	${sheet('component-dlg', 'Add component', `/update/component${q}`, hx,
+		field('name', 'Name', 'text', { required: true }) +
+		field('brand', 'Brand', 'text', { required: true }) +
+		field('cost', 'Cost', 'number', { step: '0.01', required: true, inputmode: 'decimal' }))}
+
+	${sheet('event-dlg', 'Add event', `/update/event${q}`, hx,
+		field('name', 'What happened', 'text', { required: true }) +
+		field('cost', 'Cost', 'number', { step: '0.01', inputmode: 'decimal' }) +
+		field('date', 'Date', 'date', {}))}
 </div>`;
 }
 
-const stat = (label: string, value: string) => `<div class="mx-auto flex max-w-xs flex-col gap-y-4">
-	<dt class="text-base leading-7 text-gray-200">${label}</dt>
-	<dd class="order-first text-xl font-semibold tracking-tight text-gray-100 sm:text-3xl">${value}</dd>
+/** Horizontally scrollable so four names never wrap or squash on a phone. */
+function tabs(bikes: Bike[], current: Bike, k: string, hx: string): string {
+	return `<nav class="mx-auto max-w-3xl overflow-x-auto px-4 pb-3 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+		<div class="inline-flex gap-1 rounded-lg bg-zinc-900 p-1">
+			${bikes
+				.map((b) => {
+					const active = b.id === current.id;
+					return `<button ${hx}
+						hx-get="/update/panel?k=${encodeURIComponent(k)}&bike=${b.id}"
+						hx-push-url="/update?k=${encodeURIComponent(k)}&bike=${b.id}"
+						class="min-h-9 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors ${
+							active ? 'bg-zinc-800 text-zinc-50 shadow-sm' : 'text-zinc-400 hover:text-zinc-100'
+						}">${esc(b.name)}</button>`;
+				})
+				.join('')}
+		</div>
+	</nav>`;
+}
+
+/** Tremor-style KPI: quiet label, prominent figure. */
+const metric = (label: string, value: string) => `<div class="${CARD} px-3 py-3">
+	<p class="text-[11px] uppercase tracking-wide ${MUTED}">${label}</p>
+	<p class="mt-1 truncate text-lg font-semibold tabular-nums sm:text-2xl">${value}</p>
 </div>`;
 
-const action = (dlg: string, colour: string, label: string) => `<li class="flow-root">
-	<button type="button" onclick="document.getElementById('${dlg}').showModal()"
-		class="relative -m-2 flex w-full items-center space-x-4 rounded-xl p-2 text-left hover:bg-gray-500/20">
-		<span class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg ${colour}"></span>
-		<span class="text-sm font-medium text-white">${label}</span>
-	</button>
-</li>`;
+const actionBtn = (dlg: string, label: string, icon: string) =>
+	`<button type="button" onclick="document.getElementById('${dlg}').showModal()" class="${BTN} w-full">${icon}${label}</button>`;
 
-function table(
+/**
+ * Rows rather than a table: a four-column table forces horizontal scrolling on
+ * a phone. Long histories collapse behind a native <details> so the mileage
+ * log does not bury the rest of the page.
+ */
+function list<T extends { id: number }>(
 	title: string,
-	headers: string[],
-	rows: string[][],
-	ids: number[],
-	kind: string,
+	rows: T[],
 	q: string,
-	hx: string
+	hx: string,
+	kind: string,
+	shape: (row: T) => { title: string; sub: string; right: string }
 ): string {
+	const head = `<div class="mb-2 flex items-baseline justify-between">
+		<h2 class="text-sm font-semibold">${title}</h2>
+		<span class="text-xs ${MUTED}">${rows.length}</span>
+	</div>`;
+
 	if (rows.length === 0) {
-		return `<section><h3 class="text-sm font-semibold text-gray-200">${title}</h3>
-			<p class="mt-2 text-sm text-gray-400">Nothing recorded yet.</p></section>`;
+		return `<section>${head}<div class="${CARD} px-4 py-6 text-center text-sm ${MUTED}">Nothing recorded yet.</div></section>`;
 	}
-	return `<section>
-	<h3 class="text-sm font-semibold text-gray-200">${title}</h3>
-	<div class="mt-2 overflow-x-auto">
-	<table class="min-w-full divide-y divide-gray-600 text-sm">
-		<thead><tr>${headers.map((h) => `<th class="py-2 pr-4 text-left font-medium text-gray-300">${h}</th>`).join('')}<th class="sr-only">Delete</th></tr></thead>
-		<tbody class="divide-y divide-gray-600/50">
-			${rows
-				.map(
-					(cells, i) => `<tr>${cells.map((c) => `<td class="py-2 pr-4 text-gray-100">${c}</td>`).join('')}
-				<td class="py-2 text-right">
-					<button ${hx} hx-post="/update/delete${q}&kind=${kind}&id=${ids[i]}"
-						hx-confirm="Delete this ${kind} entry?"
-						class="text-xs text-red-400 hover:text-red-300">Delete</button>
-				</td></tr>`
-				)
-				.join('')}
-		</tbody>
-	</table>
+
+	const item = (row: T) => {
+		const { title: t, sub, right } = shape(row);
+		return `<li class="flex items-center gap-3 px-4 py-3">
+			<div class="min-w-0 flex-1">
+				<p class="truncate text-sm font-medium text-zinc-100">${t}</p>
+				<p class="truncate text-xs ${MUTED}">${sub}</p>
+			</div>
+			${right ? `<span class="shrink-0 text-sm tabular-nums text-zinc-300">${right}</span>` : ''}
+			<button ${hx} hx-post="/update/delete${q}&kind=${kind}&id=${row.id}"
+				hx-confirm="Delete this entry?"
+				aria-label="Delete"
+				class="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-800 hover:text-red-400">${ICON.trash}</button>
+		</li>`;
+	};
+
+	const VISIBLE = 5;
+	const shown = rows.slice(0, VISIBLE);
+	const rest = rows.slice(VISIBLE);
+
+	return `<section>${head}
+	<div class="${CARD} overflow-hidden">
+		<ul class="divide-y divide-zinc-800">${shown.map(item).join('')}</ul>
+		${
+			rest.length
+				? `<details class="group border-t border-zinc-800">
+			<summary class="flex min-h-11 cursor-pointer list-none items-center justify-center text-sm ${MUTED} hover:text-zinc-100">
+				<span class="group-open:hidden">Show ${rest.length} more</span>
+				<span class="hidden group-open:inline">Show less</span>
+			</summary>
+			<ul class="divide-y divide-zinc-800 border-t border-zinc-800">${rest.map(item).join('')}</ul>
+		</details>`
+				: ''
+		}
 	</div>
 </section>`;
 }
 
-function dialog(id: string, title: string, action: string, hx: string, fields: string): string {
-	return `<dialog id="${id}" class="rounded-lg bg-gray-900 p-0 text-white backdrop:bg-black/50">
-	<form method="dialog" class="absolute right-3 top-3"><button class="text-gray-400 hover:text-white" aria-label="Close">&times;</button></form>
-	<form ${hx} hx-post="${action}" class="w-80 space-y-4 p-6">
-		<h3 class="text-base font-semibold">${title}</h3>
-		${fields}
-		<button type="submit" class="w-full rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold hover:bg-indigo-400">Save</button>
+/**
+ * A bottom sheet on phones. The field area scrolls and the submit button is
+ * pinned, so a ten-field form cannot push Save off the top of the screen.
+ */
+function sheet(id: string, title: string, action: string, hx: string, fields: string): string {
+	return `<dialog id="${id}" class="border border-zinc-800 bg-zinc-900 p-0 text-zinc-50">
+	<div class="flex shrink-0 items-center justify-between border-b border-zinc-800 px-4 py-3">
+		<h3 class="text-sm font-semibold">${title}</h3>
+		<form method="dialog"><button class="flex h-9 w-9 items-center justify-center rounded-md ${MUTED} hover:bg-zinc-800 hover:text-zinc-100" aria-label="Close">${ICON.x}</button></form>
+	</div>
+	<form ${hx} hx-post="${action}" class="flex min-h-0 flex-1 flex-col">
+		<div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">${fields}</div>
+		<div class="shrink-0 border-t border-zinc-800 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+			<button type="submit" class="min-h-11 w-full rounded-lg bg-zinc-50 text-sm font-semibold text-zinc-900 transition-colors hover:bg-white active:bg-zinc-200">Save</button>
+		</div>
 	</form>
 </dialog>`;
 }
@@ -177,11 +222,39 @@ function field(
 	attrs: Record<string, string | boolean>
 ): string {
 	const extra = Object.entries(attrs)
-		.map(([k, v]) => (v === true ? k : `${k}="${esc(v)}"`))
+		.map(([key, v]) => (v === true ? key : `${key}="${esc(v)}"`))
 		.join(' ');
 	return `<label class="block">
-		<span class="text-sm text-gray-300">${label}</span>
+		<span class="text-xs ${MUTED}">${label}</span>
 		<input name="${name}" type="${type}" ${extra}
-			class="mt-1 block w-full rounded-md border-0 bg-gray-800 py-1.5 text-white shadow-sm ring-1 ring-inset ring-gray-700 focus:ring-2 focus:ring-indigo-500 sm:text-sm">
+			class="mt-1 block min-h-11 w-full rounded-lg border-zinc-700 bg-zinc-950 text-base text-zinc-50 placeholder:text-zinc-600 focus:border-zinc-500 focus:ring-0">
 	</label>`;
 }
+
+const textarea = (name: string, label: string, value: string) => `<label class="block">
+	<span class="text-xs ${MUTED}">${label}</span>
+	<textarea name="${name}" rows="3"
+		class="mt-1 block w-full rounded-lg border-zinc-700 bg-zinc-950 text-base text-zinc-50 focus:border-zinc-500 focus:ring-0">${esc(value)}</textarea>
+</label>`;
+
+const select = (name: string, label: string, options: string[], chosen: string) => `<label class="block">
+	<span class="text-xs ${MUTED}">${label}</span>
+	<select name="${name}"
+		class="mt-1 block min-h-11 w-full rounded-lg border-zinc-700 bg-zinc-950 text-base capitalize text-zinc-50 focus:border-zinc-500 focus:ring-0">
+		${options.map((o) => `<option value="${esc(o)}"${o === chosen ? ' selected' : ''}>${esc(o)}</option>`).join('')}
+	</select>
+</label>`;
+
+/** <input type="date"> wants YYYY-MM-DD, and an empty string when unset. */
+const isoDay = (unixSeconds: number | null) =>
+	unixSeconds ? new Date(unixSeconds * 1000).toISOString().slice(0, 10) : '';
+
+// Inline so there is no icon dependency and no extra request.
+const ICON = {
+	gauge: `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M12 14v-4m0 4a2 2 0 100-4 2 2 0 000 4zm9 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+	wrench: `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11.4 6.6a4 4 0 105.5 5.2l3.6 3.6a2 2 0 01-2.8 2.8l-3.6-3.6a4 4 0 01-5.2-5.5L6 7l-2-2 2-2 2 2 1.4 1.6z"/></svg>`,
+	calendar: `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3v3m8-3v3M4 9h16M5 6h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1z"/></svg>`,
+	trash: `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M10 11v5m4-5v5M7 7l1 12a1 1 0 001 1h6a1 1 0 001-1l1-12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>`,
+	pencil: `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 4.5l3 3L8 19H5v-3L16.5 4.5z"/></svg>`,
+	x: `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>`
+};

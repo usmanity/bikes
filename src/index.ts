@@ -1,5 +1,12 @@
 import { listBikes, exportAll } from './db/read.ts';
-import { addMileage, addComponent, addEvent, remove, type Deletable } from './db/write.ts';
+import {
+	addMileage,
+	addComponent,
+	addEvent,
+	remove,
+	updateBike,
+	type Deletable
+} from './db/write.ts';
 import { homePage } from './views/home.ts';
 import { adminPage, adminPanel } from './views/admin.ts';
 import { html } from './views/layout.ts';
@@ -54,11 +61,16 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 	const k = env.ADMIN_TOKEN;
 	const bikeId = Number(url.searchParams.get('bike'));
 
-	if (url.pathname === '/update') {
+	if (url.pathname === '/update' || url.pathname === '/update/panel') {
 		const bikes = await listBikes(env.DB);
 		if (bikes.length === 0) return html('<p>No bikes yet.</p>');
 		const current = bikes.find((b) => b.id === bikeId) ?? bikes[0];
-		return html(adminPage(bikes, current, k));
+		// /update/panel is the tab bar swapping bikes without a full reload.
+		return html(
+			url.pathname === '/update/panel'
+				? adminPanel(bikes, current, k)
+				: adminPage(bikes, current, k)
+		);
 	}
 
 	if (request.method !== 'POST') return notFound();
@@ -95,6 +107,29 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 			await addEvent(env.DB, bikeId, name, cost, seconds);
 			break;
 		}
+		case '/update/bike': {
+			const name = str('name');
+			const brand = str('brand');
+			const model = str('model');
+			const price = num('initial_price');
+			const acquired = str('acquire_date');
+			if (!name || !brand || !model || !Number.isFinite(price)) {
+				return new Response('Bad bike', { status: 400 });
+			}
+			await updateBike(env.DB, bikeId, {
+				name,
+				brand,
+				model,
+				description: str('description') || null,
+				status: str('status') === 'retired' ? 'retired' : 'active',
+				bike_type: str('bike_type') || 'road',
+				initial_price: price,
+				miles_at_acquire: Number.isFinite(num('miles_at_acquire')) ? num('miles_at_acquire') : 0,
+				photo: str('photo') || null,
+				acquire_date: acquired ? Math.floor(Date.parse(acquired + 'T00:00:00Z') / 1000) : null
+			});
+			break;
+		}
 		case '/update/delete': {
 			const kind = url.searchParams.get('kind') as Deletable | null;
 			const id = Number(url.searchParams.get('id'));
@@ -112,7 +147,7 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 	const bikes = await listBikes(env.DB);
 	const current = bikes.find((b) => b.id === bikeId);
 	if (!current) return new Response('Bike not found', { status: 404 });
-	return html(adminPanel(current, k));
+	return html(adminPanel(bikes, current, k));
 }
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
