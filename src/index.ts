@@ -1,0 +1,110 @@
+import { listBikes } from './db/read.ts';
+import { addMileage, addComponent, addEvent, remove, type Deletable } from './db/write.ts';
+import { homePage } from './views/home.ts';
+import { adminPage, adminPanel } from './views/admin.ts';
+import { html } from './views/layout.ts';
+
+export interface Env {
+	DB: D1Database;
+	ADMIN_TOKEN: string;
+	ASSETS: Fetcher;
+}
+
+export default {
+	async fetch(request, env) {
+		return await handle(request, env).catch(
+			(err) => new Response((err as Error).stack, { status: 500 })
+		);
+	}
+} satisfies ExportedHandler<Env>;
+
+const notFound = () => new Response('Not found', { status: 404 });
+
+async function handle(request: Request, env: Env): Promise<Response> {
+	const url = new URL(request.url);
+
+	if (url.pathname === '/') {
+		return html(homePage(await listBikes(env.DB)));
+	}
+
+	if (url.pathname === '/update' || url.pathname.startsWith('/update/')) {
+		// 404 rather than 401 so the admin surface is indistinguishable from a
+		// bad path. The !ADMIN_TOKEN clause first means an unset secret in
+		// production rejects everything instead of failing open.
+		if (!env.ADMIN_TOKEN || url.searchParams.get('k') !== env.ADMIN_TOKEN) {
+			return notFound();
+		}
+		return await handleAdmin(request, url, env);
+	}
+
+	return env.ASSETS.fetch(request);
+}
+
+async function handleAdmin(request: Request, url: URL, env: Env): Promise<Response> {
+	const k = env.ADMIN_TOKEN;
+	const bikeId = Number(url.searchParams.get('bike'));
+
+	if (url.pathname === '/update') {
+		const bikes = await listBikes(env.DB);
+		if (bikes.length === 0) return html('<p>No bikes yet.</p>');
+		const current = bikes.find((b) => b.id === bikeId) ?? bikes[0];
+		return html(adminPage(bikes, current, k));
+	}
+
+	if (request.method !== 'POST') return notFound();
+	if (!Number.isInteger(bikeId)) return new Response('Bad bike id', { status: 400 });
+
+	// Deletes carry no body at all, and a bodyless formData() throws rather
+	// than returning empty, so every mutation would 500 before validating.
+	const form = await request.formData().catch(() => new FormData());
+	const str = (name: string) => String(form.get(name) ?? '').trim();
+	const num = (name: string) => Number(form.get(name));
+
+	switch (url.pathname) {
+		case '/update/mileage': {
+			const miles = num('miles');
+			if (!Number.isFinite(miles) || miles < 0) return new Response('Bad mileage', { status: 400 });
+			await addMileage(env.DB, bikeId, miles);
+			break;
+		}
+		case '/update/component': {
+			const name = str('name');
+			const brand = str('brand');
+			const cost = num('cost');
+			if (!name || !brand || !Number.isFinite(cost)) return new Response('Bad component', { status: 400 });
+			await addComponent(env.DB, bikeId, name, brand, cost);
+			break;
+		}
+		case '/update/event': {
+			const name = str('name');
+			if (!name) return new Response('Bad event', { status: 400 });
+			const cost = Number.isFinite(num('cost')) ? num('cost') : 0;
+			const date = str('date');
+			const seconds = date ? Math.floor(Date.parse(date + 'T00:00:00Z') / 1000) : nowSeconds();
+			if (!Number.isFinite(seconds)) return new Response('Bad date', { status: 400 });
+			await addEvent(env.DB, bikeId, name, cost, seconds);
+			break;
+		}
+		case '/update/delete': {
+			const kind = url.searchParams.get('kind') as Deletable | null;
+			const id = Number(url.searchParams.get('id'));
+			if (!kind || !DELETABLE_KINDS.includes(kind) || !Number.isInteger(id)) {
+				return new Response('Bad delete', { status: 400 });
+			}
+			await remove(env.DB, kind, id);
+			break;
+		}
+		default:
+			return notFound();
+	}
+
+	// Re-render the panel the request came from; htmx swaps it into place.
+	const bikes = await listBikes(env.DB);
+	const current = bikes.find((b) => b.id === bikeId);
+	if (!current) return new Response('Bike not found', { status: 404 });
+	return html(adminPanel(current, k));
+}
+
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+const DELETABLE_KINDS: Deletable[] = ['component', 'event', 'mileage'];

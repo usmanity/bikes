@@ -1,0 +1,15 @@
+name = "bikes"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# Static files (photos, css, vendored htmx, icons). The Worker falls through
+# to these for any path it does not handle itself.
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bikes"
+database_id = "d492ca2e-7e71-4c1f-9843-28c962ac53e5"
+migrations_dir = "migrations"

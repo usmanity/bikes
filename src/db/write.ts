@@ -1,0 +1,65 @@
+// Every mutation the update page performs. Nothing else writes to the store.
+//
+// This file is the seam. Writes go to D1 today; if they later go somewhere
+// else, or sync to another database, this is the only file that changes —
+// read.ts and the routes stay as they are.
+
+/** Latest recorded mileage for a bike, or 0 if it has never been logged. */
+async function latestMileage(db: D1Database, bikeId: number): Promise<number> {
+	const row = await db
+		.prepare('SELECT mileage FROM mileage_updates WHERE bike_id = ? ORDER BY created_at DESC LIMIT 1')
+		.bind(bikeId)
+		.first<{ mileage: number }>();
+	return row?.mileage ?? 0;
+}
+
+export function addMileage(db: D1Database, bikeId: number, mileage: number) {
+	return db
+		.prepare('INSERT INTO mileage_updates (bike_id, mileage) VALUES (?, ?)')
+		.bind(bikeId, mileage)
+		.run();
+}
+
+export async function addComponent(
+	db: D1Database,
+	bikeId: number,
+	name: string,
+	brand: string,
+	cost: number
+) {
+	// Recorded against the odometer at install so wear can be derived later.
+	const miles = await latestMileage(db, bikeId);
+	return db
+		.prepare(
+			`INSERT INTO components (bike_id, name, brand, cost, miles_at_install, installation_date)
+			 VALUES (?, ?, ?, ?, ?, unixepoch())`
+		)
+		.bind(bikeId, name, brand, cost, miles)
+		.run();
+}
+
+export function addEvent(
+	db: D1Database,
+	bikeId: number,
+	name: string,
+	cost: number,
+	date: number
+) {
+	return db
+		.prepare('INSERT INTO events (bike_id, name, cost, date) VALUES (?, ?, ?, ?)')
+		.bind(bikeId, name, cost, date)
+		.run();
+}
+
+const DELETABLE = {
+	component: 'components',
+	event: 'events',
+	mileage: 'mileage_updates'
+} as const;
+
+export type Deletable = keyof typeof DELETABLE;
+
+/** Table name comes from DELETABLE, never from the request, so it cannot be injected. */
+export function remove(db: D1Database, kind: Deletable, id: number) {
+	return db.prepare(`DELETE FROM ${DELETABLE[kind]} WHERE id = ?`).bind(id).run();
+}
