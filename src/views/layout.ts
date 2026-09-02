@@ -9,7 +9,11 @@ export function esc(value: unknown): string {
 		.replace(/'/g, '&#39;');
 }
 
-export function page(title: string, body: string, opts: { htmx?: boolean } = {}): string {
+export function page(
+	title: string,
+	body: string,
+	opts: { htmx?: boolean; scripts?: string[] } = {}
+): string {
 	return `<!doctype html>
 <html lang="en" class="h-full">
 <head>
@@ -20,11 +24,26 @@ export function page(title: string, body: string, opts: { htmx?: boolean } = {})
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/app.css">
 ${opts.htmx ? '<script src="/htmx.min.js" defer></script>' : ''}
+${(opts.scripts ?? []).map((src) => `<script src="${src}" defer></script>`).join('\n')}
 </head>
 <body class="h-full">
 ${body}
 </body>
 </html>`;
+}
+
+/**
+ * A photo stored in D1 wins over the static fallback in public/. The ?v=
+ * carries the row's updated_at, so a new upload yields a new URL and the old
+ * one can be cached forever.
+ */
+export function photoUrl(bike: {
+	id: number;
+	photo: string | null;
+	photo_version: number | null;
+}): string | null {
+	if (bike.photo_version) return `/photos/${bike.id}?v=${bike.photo_version}`;
+	return bike.photo ? `/${bike.photo}` : null;
 }
 
 export const html = (body: string, status = 200) =>

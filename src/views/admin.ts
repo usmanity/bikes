@@ -1,6 +1,6 @@
 import type { Bike, ComponentRow, EventRow, MileageRow } from '../db/read.ts';
 import { totalCost, perMileCost, milesRidden, money, day } from '../cost.ts';
-import { esc, page } from './layout.ts';
+import { esc, page, photoUrl } from './layout.ts';
 
 /**
  * Built phone-first: this is where the bike actually gets updated, usually
@@ -20,7 +20,7 @@ export function adminPage(bikes: Bike[], current: Bike, k: string): string {
 	return page(
 		`${current.name} · update`,
 		`<div class="min-h-full bg-zinc-950 text-zinc-50">${adminPanel(bikes, current, k)}</div>`,
-		{ htmx: true }
+		{ htmx: true, scripts: ['/photo-upload.js'] }
 	);
 }
 
@@ -56,6 +56,8 @@ export function adminPanel(bikes: Bike[], current: Bike, k: string): string {
 			${metric('Total', money(totalCost(current)))}
 			${metric('Per mile', perMileCost(current))}
 		</section>
+
+		${photoCard(current, q, hx)}
 
 		<section class="grid grid-cols-1 gap-2 sm:grid-cols-3">
 			${actionBtn('mileage-dlg', 'Log mileage', ICON.gauge)}
@@ -107,6 +109,37 @@ export function adminPanel(bikes: Bike[], current: Bike, k: string): string {
 		field('cost', 'Cost', 'number', { step: '0.01', inputmode: 'decimal' }) +
 		field('date', 'Date', 'date', {}))}
 </div>`;
+}
+
+/**
+ * Upload posts straight to the Worker rather than through htmx, because the
+ * file is swapped for a downscaled copy first. photo-upload.js intercepts the
+ * submit; without JS the form still posts the original and the server caps it.
+ */
+function photoCard(bike: Bike, q: string, hx: string): string {
+	const src = photoUrl(bike);
+	return `<section class="${CARD} overflow-hidden">
+	<div class="aspect-video w-full bg-zinc-950">
+		${
+			src
+				? `<img src="${esc(src)}" alt="${esc(bike.name)}" class="h-full w-full object-cover">`
+				: `<div class="flex h-full items-center justify-center text-sm ${MUTED}">No photo yet</div>`
+		}
+	</div>
+	<form data-photo-form action="/update/photo${q}" method="post" enctype="multipart/form-data"
+		class="flex items-center gap-2 border-t border-zinc-800 p-3">
+		<input type="file" name="photo" accept="image/*" required
+			class="min-w-0 flex-1 text-xs ${MUTED} file:mr-3 file:min-h-9 file:rounded-md file:border-0 file:bg-zinc-800 file:px-3 file:text-xs file:font-medium file:text-zinc-100">
+		<button type="submit" class="${BTN} shrink-0 px-3 text-xs">Upload</button>
+		${
+			bike.photo_version
+				? `<button type="button" ${hx} hx-post="/update/photo/remove${q}" hx-confirm="Remove this photo?"
+			class="${BTN} shrink-0 px-3 text-xs">Remove</button>`
+				: ''
+		}
+	</form>
+	<p data-photo-error class="px-3 pb-3 text-xs text-red-400 empty:hidden"></p>
+</section>`;
 }
 
 /** Horizontally scrollable so four names never wrap or squash on a phone. */

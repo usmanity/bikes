@@ -1,6 +1,6 @@
 import type { Bike } from '../db/read.ts';
 import { totalCost, perMileCost, milesRidden, money } from '../cost.ts';
-import { esc, page } from './layout.ts';
+import { esc, page, photoUrl } from './layout.ts';
 
 /** The public view. Read-only, and deliberately ships no JavaScript. */
 export function homePage(bikes: Bike[]): string {
@@ -23,9 +23,13 @@ function bikeCard(bike: Bike): string {
 	return `<div class="border-b border-t border-gray-200 dark:border-stone-600/30 dark:hover:border-stone-600/60 bg-white dark:bg-stone-900 shadow-sm sm:rounded-lg sm:border transition-all duration-500">
 	<div class="px-4 py-6 sm:px-6 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:p-8">
 		<div class="sm:flex lg:col-span-7">
-			<div class="aspect-video w-full flex-shrink-0 overflow-hidden rounded-lg sm:aspect-none sm:w-64">
-				<img src="/${esc(bike.photo)}" alt="A photo of my ${esc(bike.brand)} bike" loading="lazy"
-					class="h-full w-full object-cover object-center dark:brightness-50 dark:hover:brightness-90 transition-all duration-500 ease-in-out dark:blur-[0.3px] dark:hover:blur-none">
+			<div class="aspect-video w-full flex-shrink-0 overflow-hidden rounded-lg bg-stone-200 dark:bg-stone-800 sm:aspect-none sm:w-64">
+				${
+					photoUrl(bike)
+						? `<img src="${esc(photoUrl(bike))}" alt="A photo of my ${esc(bike.brand)} bike" loading="lazy"
+					class="h-full w-full object-cover object-center dark:brightness-50 dark:hover:brightness-90 transition-all duration-500 ease-in-out dark:blur-[0.3px] dark:hover:blur-none">`
+						: ''
+				}
 			</div>
 			<div class="mt-6 sm:ml-6 sm:mt-0">
 				<h3 class="text-base font-medium text-gray-900 dark:text-stone-50">${esc(bike.brand)} ${esc(bike.model)}</h3>

@@ -50,24 +50,33 @@ check "tab panel needs token"    "$(code "$B/update/panel?bike=1")" "404"
 check "tab panel returns fragment" "$(curl -s "$B/update/panel?k=$KE&bike=2" | head -c 20 | grep -c 'admin-panel')" "1"
 check "tab panel shows that bike" "$(curl -s "$B/update/panel?k=$KE&bike=2" | grep -c 'Kiwi Maddog')" "$(curl -s "$B/update/panel?k=$KE&bike=2" | grep -c 'Kiwi Maddog')"
 
-ORIG=$(npx wrangler d1 execute bikes --local --json --command \
-  "SELECT description d FROM bikes WHERE id=1" 2>/dev/null \
-  | node -e "const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j[0].results[0].d??'')")
-check "edit bike saves" "$(code -X POST "$B/update/bike?k=$KE&bike=1" \
-  -d 'name=Rooted&brand=Tenways&model=CGO 600&description=SMOKE TEST&status=active&bike_type=e-bike&initial_price=1600&miles_at_acquire=0')" "200"
+# The edit endpoint is a full-record overwrite, so snapshot the whole row and
+# put it back afterwards rather than restoring field by field.
+snap() { npx wrangler d1 execute bikes --local --json --command \
+  "SELECT * FROM bikes WHERE id=1" 2>/dev/null \
+  | node -e "const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(JSON.stringify(j[0].results[0]))"; }
+BEFORE_ROW=$(snap)
+# description is left out so a test can supply its own without duplicating the
+# key, which would win the form.get() lookup and silently no-op the check.
+FIELDS=$(node -e "const b=JSON.parse(process.argv[1]);
+console.log(['name','brand','model','status','bike_type','initial_price','miles_at_acquire']
+  .map(k=>k+'='+encodeURIComponent(b[k]??'')).join('&'))" "$BEFORE_ROW")
+DESC=$(node -e "console.log('description='+encodeURIComponent(JSON.parse(process.argv[1]).description??''))" "$BEFORE_ROW")
+
+check "edit bike saves" "$(code -X POST "$B/update/bike?k=$KE&bike=1" -d "$FIELDS&description=SMOKE_TEST")" "200"
 check "description changed" "$(npx wrangler d1 execute bikes --local --json --command \
-  "SELECT description d FROM bikes WHERE id=1" 2>/dev/null | grep -c 'SMOKE TEST')" "1"
+  "SELECT description d FROM bikes WHERE id=1" 2>/dev/null | grep -c 'SMOKE_TEST')" "1"
 check "edit rejects empty name" "$(code -X POST "$B/update/bike?k=$KE&bike=1" -d 'name=&brand=x&model=y&initial_price=1')" "400"
-check "status is constrained" "$(code -X POST "$B/update/bike?k=$KE&bike=1" \
-  -d "name=Rooted&brand=Tenways&model=CGO 600&status=DROP&initial_price=1600&description=$ORIG")" "200"
+check "status is constrained" "$(code -X POST "$B/update/bike?k=$KE&bike=1" -d "$FIELDS&$DESC&status=DROP")" "200"
 check "bad status fell back"  "$(npx wrangler d1 execute bikes --local --json --command \
   "SELECT status s FROM bikes WHERE id=1" 2>/dev/null | grep -c '"s": "active"')" "1"
 
-# Put the description back so a smoke run leaves the local db as it found it.
-npx wrangler d1 execute bikes --local --command \
-  "UPDATE bikes SET description='$ORIG' WHERE id=1" >/dev/null 2>&1
-check "smoke restored the row" "$(npx wrangler d1 execute bikes --local --json --command \
-  "SELECT description d FROM bikes WHERE id=1" 2>/dev/null | grep -c 'SMOKE TEST')" "0"
+# Put every field back, then prove nothing drifted.
+curl -s -o /dev/null -X POST "$B/update/bike?k=$KE&bike=1" -d "$FIELDS&$DESC"
+check "smoke restored the row" "$(node -e "
+const a=JSON.parse(process.argv[1]), b=JSON.parse(process.argv[2]);
+const keys=['name','brand','model','description','status','bike_type','initial_price','miles_at_acquire'];
+console.log(keys.every(k=>String(a[k])===String(b[k]))?'same':'drifted')" "$BEFORE_ROW" "$(snap)")" "same"
 
 # --- export seam for ~/projects/data ---
 check "export needs a token"     "$(code "$B/api/export")" "404"
@@ -90,5 +99,24 @@ strip() { node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));dele
 A=$(curl -s "$B/api/export?k=$KE" | strip)
 Z=$(curl -s "$B/api/export?k=$KE" | strip)
 check "export is stable"         "$([ "$A" = "$Z" ] && echo same || echo differs)" "same"
+
+# --- photos in D1 ---
+# Note: this leaves bike 1 with no photo locally. Local D1 is scratch; rebuild
+# it with `npm run migrate:local`, the seed file, and ./scripts/import-photos.sh
+PNG=/tmp/bikes-smoke-pixel.png
+node -e "require('fs').writeFileSync('$PNG',Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64'))"
+check "upload needs a token"   "$(code -X POST "$B/update/photo?bike=1" -F "photo=@$PNG")" "404"
+check "upload rejects no file" "$(code -X POST "$B/update/photo?k=$KE&bike=1")" "400"
+check "upload rejects non-image" "$(code -X POST "$B/update/photo?k=$KE&bike=1" -F "photo=@smoke.sh;type=text/plain")" "400"
+check "upload accepts an image" "$(code -X POST "$B/update/photo?k=$KE&bike=1" -F "photo=@$PNG;type=image/png")" "200"
+check "photo is served"        "$(code "$B/photos/1")" "200"
+check "photo keeps its mime"   "$(curl -sI "$B/photos/1" | grep -ci 'content-type: image/png')" "1"
+check "photo is public"        "$(code "$B/photos/1")" "200"
+check "versioned url is immutable" "$(curl -sI "$B/photos/1?v=1" | grep -ci 'immutable')" "1"
+check "missing photo 404s"     "$(code "$B/photos/999")" "404"
+check "bikes query skips bytes" "$(curl -s "$B/api/export?k=$KE" | grep -c 'bytes')" "0"
+check "photo removed"          "$(code -X POST "$B/update/photo/remove?k=$KE&bike=1")" "200"
+check "removed photo 404s"     "$(code "$B/photos/1")" "404"
+rm -f "$PNG"
 
 echo "all smoke checks passed"

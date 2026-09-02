@@ -100,3 +100,22 @@ export function updateBike(db: D1Database, id: number, b: BikeEdit) {
 		)
 		.run();
 }
+
+export function setPhoto(db: D1Database, bikeId: number, mime: string, bytes: ArrayBuffer) {
+	return db
+		.prepare(
+			`INSERT INTO bike_photos (bike_id, mime, bytes, byte_size, updated_at)
+			 VALUES (?, ?, ?, ?, unixepoch())
+			 ON CONFLICT(bike_id) DO UPDATE SET
+			   mime = excluded.mime,
+			   bytes = excluded.bytes,
+			   byte_size = excluded.byte_size,
+			   updated_at = excluded.updated_at`
+		)
+		.bind(bikeId, mime, bytes, bytes.byteLength)
+		.run();
+}
+
+export function removePhoto(db: D1Database, bikeId: number) {
+	return db.prepare('DELETE FROM bike_photos WHERE bike_id = ?').bind(bikeId).run();
+}

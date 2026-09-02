@@ -47,6 +47,16 @@ export interface Bike extends BikeRow {
 	mileage: MileageRow[];
 	components: ComponentRow[];
 	events: EventRow[];
+	/** Set when a photo is stored in D1. Doubles as a cache-busting version. */
+	photo_version: number | null;
+}
+
+/** Bytes plus mime for one stored photo. Only read by the /photos route. */
+export function readPhoto(db: D1Database, bikeId: number) {
+	return db
+		.prepare('SELECT mime, bytes FROM bike_photos WHERE bike_id = ?')
+		.bind(bikeId)
+		.first<{ mime: string; bytes: ArrayBuffer | number[] }>();
 }
 
 /**
@@ -57,11 +67,14 @@ export interface Bike extends BikeRow {
  * At this size all four are trivial, and D1 batches them in one round trip.
  */
 export async function listBikes(db: D1Database): Promise<Bike[]> {
-	const [bikes, mileage, components, events] = await db.batch([
+	const [bikes, mileage, components, events, photos] = await db.batch([
 		db.prepare('SELECT * FROM bikes ORDER BY id'),
 		db.prepare('SELECT * FROM mileage_updates ORDER BY bike_id, created_at DESC'),
 		db.prepare('SELECT * FROM components ORDER BY bike_id, created_at DESC'),
-		db.prepare('SELECT * FROM events ORDER BY bike_id, created_at DESC')
+		db.prepare('SELECT * FROM events ORDER BY bike_id, created_at DESC'),
+		// Metadata only. Selecting `bytes` here would pull every image into
+		// memory on every page render.
+		db.prepare('SELECT bike_id, updated_at FROM bike_photos')
 	]);
 
 	const by = <T extends { bike_id: number }>(rows: unknown[]) => {
@@ -77,12 +90,19 @@ export async function listBikes(db: D1Database): Promise<Bike[]> {
 	const m = by<MileageRow>(mileage.results);
 	const c = by<ComponentRow>(components.results);
 	const e = by<EventRow>(events.results);
+	const v = new Map(
+		(photos.results as { bike_id: number; updated_at: number }[]).map((p) => [
+			p.bike_id,
+			p.updated_at
+		])
+	);
 
 	return (bikes.results as BikeRow[]).map((bike) => ({
 		...bike,
 		mileage: m.get(bike.id) ?? [],
 		components: c.get(bike.id) ?? [],
-		events: e.get(bike.id) ?? []
+		events: e.get(bike.id) ?? [],
+		photo_version: v.get(bike.id) ?? null
 	}));
 }
 

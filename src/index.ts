@@ -1,10 +1,12 @@
-import { listBikes, exportAll } from './db/read.ts';
+import { listBikes, exportAll, readPhoto } from './db/read.ts';
 import {
 	addMileage,
 	addComponent,
 	addEvent,
 	remove,
 	updateBike,
+	setPhoto,
+	removePhoto,
 	type Deletable
 } from './db/write.ts';
 import { homePage } from './views/home.ts';
@@ -42,6 +44,10 @@ async function handle(request: Request, env: Env): Promise<Response> {
 		return html(homePage(await listBikes(env.DB)));
 	}
 
+	if (url.pathname.startsWith('/photos/')) {
+		return await servePhoto(url, env);
+	}
+
 	// Same token as the admin surface. The consumer is a scheduled job that
 	// pulls the whole dataset, so it holds the token like any other client.
 	if (url.pathname === '/api/export') {
@@ -55,6 +61,32 @@ async function handle(request: Request, env: Env): Promise<Response> {
 	}
 
 	return env.ASSETS.fetch(request);
+}
+
+/** 2 MB is generous for a downscaled photo and small for a raw camera file. */
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
+async function servePhoto(url: URL, env: Env): Promise<Response> {
+	const id = Number(url.pathname.slice('/photos/'.length));
+	if (!Number.isInteger(id)) return notFound();
+
+	const row = await readPhoto(env.DB, id);
+	if (!row) return notFound();
+
+	// D1 hands blobs back as a number array in some runtimes and an
+	// ArrayBuffer in others, so normalise before constructing the body.
+	const body = Array.isArray(row.bytes) ? new Uint8Array(row.bytes) : row.bytes;
+
+	return new Response(body, {
+		headers: {
+			'content-type': row.mime,
+			// The URL carries ?v=<updated_at>, so a given URL is immutable and
+			// a new upload produces a new one.
+			'cache-control': url.searchParams.has('v')
+				? 'public, max-age=31536000, immutable'
+				: 'public, max-age=60'
+		}
+	});
 }
 
 async function handleAdmin(request: Request, url: URL, env: Env): Promise<Response> {
@@ -75,6 +107,10 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 
 	if (request.method !== 'POST') return notFound();
 	if (!Number.isInteger(bikeId)) return new Response('Bad bike id', { status: 400 });
+
+	// Handled before the shared formData parse below, which would otherwise
+	// buffer the upload a second time.
+	if (url.pathname === '/update/photo') return await handlePhotoUpload(request, env, bikeId, k);
 
 	// Deletes carry no body at all, and a bodyless formData() throws rather
 	// than returning empty, so every mutation would 500 before validating.
@@ -130,6 +166,10 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 			});
 			break;
 		}
+		case '/update/photo/remove': {
+			await removePhoto(env.DB, bikeId);
+			break;
+		}
 		case '/update/delete': {
 			const kind = url.searchParams.get('kind') as Deletable | null;
 			const id = Number(url.searchParams.get('id'));
@@ -144,6 +184,33 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 	}
 
 	// Re-render the panel the request came from; htmx swaps it into place.
+	const bikes = await listBikes(env.DB);
+	const current = bikes.find((b) => b.id === bikeId);
+	if (!current) return new Response('Bike not found', { status: 404 });
+	return html(adminPanel(bikes, current, k));
+}
+
+async function handlePhotoUpload(
+	request: Request,
+	env: Env,
+	bikeId: number,
+	k: string
+): Promise<Response> {
+	const form = await request.formData().catch(() => new FormData());
+	const file = form.get('photo');
+
+	if (!(file instanceof File) || file.size === 0) {
+		return new Response('No file received', { status: 400 });
+	}
+	if (!file.type.startsWith('image/')) {
+		return new Response('Only image files are accepted', { status: 400 });
+	}
+	if (file.size > MAX_PHOTO_BYTES) {
+		return new Response('Image is larger than 2MB', { status: 413 });
+	}
+
+	await setPhoto(env.DB, bikeId, file.type, await file.arrayBuffer());
+
 	const bikes = await listBikes(env.DB);
 	const current = bikes.find((b) => b.id === bikeId);
 	if (!current) return new Response('Bike not found', { status: 404 });
