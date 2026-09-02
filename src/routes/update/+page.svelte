@@ -20,7 +20,7 @@
 	}
 
 	function deleteComponent(id) {
-		fetch(`?/deleteComponent&id=${id}?bikeId={currentBike.id}`, {
+		fetch(`?/deleteComponent&id=${id}`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -34,7 +34,7 @@
 			});
 	}
 	function deleteEvent(id) {
-		fetch(`?/deleteEvent&id=${id}?bikeId={currentBike.id}`, {
+		fetch(`?/deleteEvent&id=${id}`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -49,7 +49,7 @@
 	}
 
 	function deleteMileage(id) {
-		fetch(`?/deleteMileageUpdate&id=${id}?bikeId={currentBike.id}`, {
+		fetch(`?/deleteMileageUpdate&id=${id}`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -164,7 +164,7 @@
 					<div class="mx-auto flex max-w-xs flex-col gap-y-4">
 						<dt class="text-base leading-7 text-gray-200">Cost per mile</dt>
 						<dd class="order-first text-xl font-semibold tracking-tight text-gray-100 sm:text-3xl">
-							${perMileCost(currentBike)}
+							{perMileCost(currentBike)}
 						</dd>
 					</div>
 				</dl>

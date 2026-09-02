@@ -1,9 +1,12 @@
-/** @type {import('./$types').PageData} */    export let data;
 export function perMileCost(bike) {
-  const latestMiles = bike.MileageUpdate[0].mileage;
+  const latestMiles = bike.MileageUpdate?.[0]?.mileage;
+  if (latestMiles === undefined) return 'n/a';
 
   const milesSinceAcquire = latestMiles - bike.milesAtAcquire;
-  return (totalCost(bike) / milesSinceAcquire).toFixed(2);
+  // A bike logged but never ridden has no meaningful per-mile cost, and
+  // dividing by it yields Infinity.
+  if (milesSinceAcquire <= 0) return 'n/a';
+  return '$' + (totalCost(bike) / milesSinceAcquire).toFixed(2);
 }
 
 export function totalCost(bike) {

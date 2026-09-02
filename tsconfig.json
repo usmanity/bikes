@@ -10,6 +10,8 @@
 		"sourceMap": true,
 		"strict": true,
 		"importHelpers": true,
+		// Node runs .ts files directly, so bike.test.ts imports with the extension.
+		"allowImportingTsExtensions": true,
 	}
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
 	//

@@ -47,7 +47,7 @@
 										<dd class="mt-3 text-zinc-500 dark:text-zinc-400">
 											<span class="block">Initial: ${bike.initialPrice}</span>
 											<span class="block">Total estimate: ${totalCost(bike).toFixed(2)}</span>
-											<span class="block">Per mile: ${perMileCost(bike)}</span>
+											<span class="block">Per mile: {perMileCost(bike)}</span>
 										</dd>
 									</div>
 									<div>
