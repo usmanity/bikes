@@ -45,4 +45,26 @@ check "tables survived"          "$(npx wrangler d1 execute bikes --local --json
   "SELECT COUNT(*) c FROM sqlite_master WHERE type='table' AND name IN ('bikes','mileage_updates','components','events')" \
   2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')" "4"
 
+# --- export seam for ~/projects/data ---
+check "export needs a token"     "$(code "$B/api/export")" "404"
+check "export rejects bad token" "$(code "$B/api/export?k=nope")" "404"
+check "export opens with token"  "$(code "$B/api/export?k=$KE")" "200"
+
+EXPORT=$(curl -s "$B/api/export?k=$KE")
+jqish() { node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log($1)" <<<"$EXPORT"; }
+check "export names its source"  "$(jqish 'd.source')" "bikes"
+check "export counts bikes"      "$(jqish 'd.bikes.length')" "$(cnt bikes)"
+check "export counts mileage"    "$(jqish 'd.mileage_updates.length')" "$(cnt mileage_updates)"
+check "export counts components" "$(jqish 'd.components.length')" "$(cnt components)"
+check "export counts events"     "$(jqish 'd.events.length')" "$(cnt events)"
+check "export keeps row ids"     "$(jqish 'd.bikes.every(b=>Number.isInteger(b.id))')" "true"
+check "export uses unix seconds" "$(jqish 'd.bikes.every(b=>b.created_at>1e9&&b.created_at<2e9)')" "true"
+
+# Two consecutive pulls must agree on every table, or the consumer would see
+# phantom changes. exported_at is provenance and is expected to differ.
+strip() { node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));delete d.exported_at;console.log(JSON.stringify(d))"; }
+A=$(curl -s "$B/api/export?k=$KE" | strip)
+Z=$(curl -s "$B/api/export?k=$KE" | strip)
+check "export is stable"         "$([ "$A" = "$Z" ] && echo same || echo differs)" "same"
+
 echo "all smoke checks passed"

@@ -85,3 +85,39 @@ export async function listBikes(db: D1Database): Promise<Bike[]> {
 		events: e.get(bike.id) ?? []
 	}));
 }
+
+export interface Export {
+	source: 'bikes';
+	schema_version: number;
+	exported_at: number;
+	bikes: BikeRow[];
+	mileage_updates: MileageRow[];
+	components: ComponentRow[];
+	events: EventRow[];
+}
+
+/**
+ * The whole dataset, flat, one array per table with ids intact.
+ *
+ * Flat rather than nested because the consumer is a data platform that stores
+ * tables, and it de-duplicates on (source, table, id) — so ids must stay
+ * stable and must never be reused. Timestamps are unix seconds throughout.
+ */
+export async function exportAll(db: D1Database): Promise<Export> {
+	const [bikes, mileage, components, events] = await db.batch([
+		db.prepare('SELECT * FROM bikes ORDER BY id'),
+		db.prepare('SELECT * FROM mileage_updates ORDER BY id'),
+		db.prepare('SELECT * FROM components ORDER BY id'),
+		db.prepare('SELECT * FROM events ORDER BY id')
+	]);
+
+	return {
+		source: 'bikes',
+		schema_version: 1,
+		exported_at: Math.floor(Date.now() / 1000),
+		bikes: bikes.results as BikeRow[],
+		mileage_updates: mileage.results as MileageRow[],
+		components: components.results as ComponentRow[],
+		events: events.results as EventRow[]
+	};
+}

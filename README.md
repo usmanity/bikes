@@ -29,6 +29,35 @@ should need to change.
 - `/update?k=<token>` — the admin page. Any request without the right token
   gets a 404, so it is indistinguishable from a bad path.
 
+## Export
+
+`GET /api/export?k=<token>` returns the whole dataset as JSON, for ingestion by
+the personal-data project.
+
+```json
+{
+  "source": "bikes",
+  "schema_version": 1,
+  "exported_at": 1756800000,
+  "bikes": [...], "mileage_updates": [...],
+  "components": [...], "events": [...]
+}
+```
+
+The contract a consumer can rely on:
+
+- **Flat, one array per table**, matching the schema in `migrations/`.
+- **Row ids are stable and are never reused**, so a consumer can de-duplicate
+  on `(source, table, id)`.
+- **Every timestamp is unix seconds**, never milliseconds or a string.
+- **Pulling twice in a row yields identical tables.** Only `exported_at`
+  differs; it is provenance, not data.
+- `schema_version` increments if the shape changes incompatibly.
+
+The dataset is ~80 rows, so a consumer should pull the whole thing on each sync
+rather than tracking deltas. Note that deletes are hard deletes: a row removed
+here disappears from the next export.
+
 ## Running it
 
 ```bash

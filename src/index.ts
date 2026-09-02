@@ -1,4 +1,4 @@
-import { listBikes } from './db/read.ts';
+import { listBikes, exportAll } from './db/read.ts';
 import { addMileage, addComponent, addEvent, remove, type Deletable } from './db/write.ts';
 import { homePage } from './views/home.ts';
 import { adminPage, adminPanel } from './views/admin.ts';
@@ -20,6 +20,14 @@ export default {
 
 const notFound = () => new Response('Not found', { status: 404 });
 
+/**
+ * Callers get a 404 rather than a 401, so a gated path cannot be told apart
+ * from a bad one. The !ADMIN_TOKEN clause comes first so that an unset secret
+ * in production rejects everything instead of failing open.
+ */
+const authorised = (url: URL, env: Env) =>
+	Boolean(env.ADMIN_TOKEN) && url.searchParams.get('k') === env.ADMIN_TOKEN;
+
 async function handle(request: Request, env: Env): Promise<Response> {
 	const url = new URL(request.url);
 
@@ -27,13 +35,15 @@ async function handle(request: Request, env: Env): Promise<Response> {
 		return html(homePage(await listBikes(env.DB)));
 	}
 
+	// Same token as the admin surface. The consumer is a scheduled job that
+	// pulls the whole dataset, so it holds the token like any other client.
+	if (url.pathname === '/api/export') {
+		if (!authorised(url, env)) return notFound();
+		return Response.json(await exportAll(env.DB));
+	}
+
 	if (url.pathname === '/update' || url.pathname.startsWith('/update/')) {
-		// 404 rather than 401 so the admin surface is indistinguishable from a
-		// bad path. The !ADMIN_TOKEN clause first means an unset secret in
-		// production rejects everything instead of failing open.
-		if (!env.ADMIN_TOKEN || url.searchParams.get('k') !== env.ADMIN_TOKEN) {
-			return notFound();
-		}
+		if (!authorised(url, env)) return notFound();
 		return await handleAdmin(request, url, env);
 	}
 
