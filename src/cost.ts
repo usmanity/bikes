@@ -7,11 +7,30 @@ export function totalCost(bike: Bike): number {
 	return bike.initial_price + events + components;
 }
 
-/** Miles ridden since acquisition, or 0 if nothing has been logged. */
+/**
+ * Miles ridden since acquisition, or 0 if nothing has been logged. Walks the
+ * mileage log chronologically (it's stored newest-first) and sums each
+ * increasing run, so a bike computer resetting mid-life doesn't wipe out the
+ * miles ridden before the reset.
+ */
 export function milesRidden(bike: Bike): number {
-	const latest = bike.mileage[0]?.mileage;
-	if (latest === undefined) return 0;
-	return Math.max(0, latest - bike.miles_at_acquire);
+	const readings = [bike.miles_at_acquire, ...[...bike.mileage].reverse().map((m) => m.mileage)];
+	let total = 0;
+	let segmentStart = readings[0];
+	let prev = readings[0];
+	for (const reading of readings.slice(1)) {
+		if (reading < prev) {
+			// A drop means the odometer got reset, not ridden backwards.
+			total += prev - segmentStart;
+			// ponytail: assumes a reset always zeroes the odometer; if a
+			// computer ever resets to some other value this undercounts the
+			// gap, revisit if that turns out to happen.
+			segmentStart = 0;
+		}
+		prev = reading;
+	}
+	total += prev - segmentStart;
+	return Math.max(0, total);
 }
 
 /**

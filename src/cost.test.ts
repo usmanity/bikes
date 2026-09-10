@@ -32,3 +32,8 @@ test('a bike with no mileage rows reads n/a instead of crashing', () => {
 test('a bike that has never been ridden reads n/a instead of Infinity', () => {
 	assert.equal(perMileCost(bike({ mileage: [{ mileage: 10 }] })), 'n/a');
 });
+
+test('milesRidden keeps pre-reset miles when the odometer drops (newest first)', () => {
+	// acquired at 0, rode to 100, computer reset, rode to 30 since
+	assert.equal(milesRidden(bike({ miles_at_acquire: 0, mileage: [{ mileage: 30 }, { mileage: 100 }] })), 130);
+});
