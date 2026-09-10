@@ -11,6 +11,7 @@ import {
 } from './db/write.ts';
 import { homePage } from './views/home.ts';
 import { adminPage, adminPanel } from './views/admin.ts';
+import { showcasePage } from './views/showcase.ts';
 import { html } from './views/layout.ts';
 
 export interface Env {
@@ -41,6 +42,11 @@ async function handle(request: Request, env: Env): Promise<Response> {
 	const url = new URL(request.url);
 
 	if (url.pathname === '/') {
+		return html(showcasePage(await listBikes(env.DB)));
+	}
+
+	// The original stats-grid UI, kept reachable but no longer the homepage.
+	if (url.pathname === '/legacy') {
 		return html(homePage(await listBikes(env.DB)));
 	}
 
@@ -122,7 +128,7 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 		case '/update/mileage': {
 			const miles = num('miles');
 			if (!Number.isFinite(miles) || miles < 0) return new Response('Bad mileage', { status: 400 });
-			await addMileage(env.DB, bikeId, miles);
+			await addMileage(env.DB, bikeId, miles, str('note') || null);
 			break;
 		}
 		case '/update/component': {
@@ -149,6 +155,7 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 			const model = str('model');
 			const price = num('initial_price');
 			const acquired = str('acquire_date');
+			const retired = str('retired_at');
 			if (!name || !brand || !model || !Number.isFinite(price)) {
 				return new Response('Bad bike', { status: 400 });
 			}
@@ -162,7 +169,8 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 				initial_price: price,
 				miles_at_acquire: Number.isFinite(num('miles_at_acquire')) ? num('miles_at_acquire') : 0,
 				photo: str('photo') || null,
-				acquire_date: acquired ? Math.floor(Date.parse(acquired + 'T00:00:00Z') / 1000) : null
+				acquire_date: acquired ? Math.floor(Date.parse(acquired + 'T00:00:00Z') / 1000) : null,
+				retired_at: retired ? Math.floor(Date.parse(retired + 'T00:00:00Z') / 1000) : null
 			});
 			break;
 		}

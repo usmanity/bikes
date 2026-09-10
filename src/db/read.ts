@@ -14,6 +14,7 @@ export interface BikeRow {
 	miles_at_acquire: number;
 	description: string | null;
 	status: string;
+	retired_at: number | null;
 	created_at: number;
 	updated_at: number;
 }
@@ -22,6 +23,7 @@ export interface MileageRow {
 	id: number;
 	bike_id: number;
 	mileage: number;
+	note: string | null;
 	created_at: number;
 }
 

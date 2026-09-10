@@ -67,7 +67,7 @@ export function adminPanel(bikes: Bike[], current: Bike, k: string): string {
 
 		${list('Mileage', current.mileage, q, hx, 'mileage', (m: MileageRow) => ({
 			title: `${m.mileage.toLocaleString()} mi`,
-			sub: day(m.created_at),
+			sub: m.note ? `${day(m.created_at)} &middot; ${esc(m.note)}` : day(m.created_at),
 			right: ''
 		}))}
 
@@ -94,10 +94,12 @@ export function adminPanel(bikes: Bike[], current: Bike, k: string): string {
 		field('initial_price', 'Initial price', 'number', { step: '0.01', required: true, inputmode: 'decimal', value: String(current.initial_price) }) +
 		field('miles_at_acquire', 'Miles at acquisition', 'number', { step: 'any', inputmode: 'decimal', value: String(current.miles_at_acquire) }) +
 		field('photo', 'Photo path', 'text', { value: current.photo ?? '' }) +
-		field('acquire_date', 'Acquired', 'date', { value: isoDay(current.acquire_date) }))}
+		field('acquire_date', 'Acquired', 'date', { value: isoDay(current.acquire_date) }) +
+		field('retired_at', 'Retired', 'date', { value: isoDay(current.retired_at) }))}
 
 	${sheet('mileage-dlg', 'Log mileage', `/update/mileage${q}`, hx,
-		field('miles', 'Odometer reading', 'number', { step: 'any', required: true, inputmode: 'decimal' }))}
+		field('miles', 'Odometer reading', 'number', { step: 'any', required: true, inputmode: 'decimal' }) +
+		field('note', 'Note (e.g. a reset)', 'text', {}))}
 
 	${sheet('component-dlg', 'Add component', `/update/component${q}`, hx,
 		field('name', 'Name', 'text', { required: true }) +

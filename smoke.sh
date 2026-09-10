@@ -20,8 +20,9 @@ cnt() { npx wrangler d1 execute bikes --local --json \
 check() { [ "$2" = "$3" ] || { echo "FAIL $1: got '$2' want '$3'"; exit 1; }; echo "ok $1"; }
 
 check "public page renders"      "$(code "$B/")" "200"
-check "public page lists bikes"  "$(curl -s "$B/" | grep -c 'Per mile:')" "$(cnt bikes)"
 check "public ships no js"       "$(curl -s "$B/" | grep -c '<script' || true)" "0"
+check "legacy page renders"      "$(code "$B/legacy")" "200"
+check "legacy page lists bikes"  "$(curl -s "$B/legacy" | grep -c 'Per mile:')" "$(cnt bikes)"
 check "static asset served"      "$(code "$B/app.css")" "200"
 check "admin needs a token"      "$(code "$B/update")" "404"
 check "admin rejects bad token"  "$(code "$B/update?k=nope")" "404"

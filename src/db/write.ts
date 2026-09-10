@@ -13,10 +13,10 @@ async function latestMileage(db: D1Database, bikeId: number): Promise<number> {
 	return row?.mileage ?? 0;
 }
 
-export function addMileage(db: D1Database, bikeId: number, mileage: number) {
+export function addMileage(db: D1Database, bikeId: number, mileage: number, note: string | null = null) {
 	return db
-		.prepare('INSERT INTO mileage_updates (bike_id, mileage) VALUES (?, ?)')
-		.bind(bikeId, mileage)
+		.prepare('INSERT INTO mileage_updates (bike_id, mileage, note) VALUES (?, ?, ?)')
+		.bind(bikeId, mileage, note)
 		.run();
 }
 
@@ -76,13 +76,14 @@ export interface BikeEdit {
 	miles_at_acquire: number;
 	photo: string | null;
 	acquire_date: number | null;
+	retired_at: number | null;
 }
 
 export function updateBike(db: D1Database, id: number, b: BikeEdit) {
 	return db
 		.prepare(
 			`UPDATE bikes SET name=?, brand=?, model=?, description=?, status=?, bike_type=?,
-			 initial_price=?, miles_at_acquire=?, photo=?, acquire_date=?, updated_at=unixepoch()
+			 initial_price=?, miles_at_acquire=?, photo=?, acquire_date=?, retired_at=?, updated_at=unixepoch()
 			 WHERE id=?`
 		)
 		.bind(
@@ -96,6 +97,7 @@ export function updateBike(db: D1Database, id: number, b: BikeEdit) {
 			b.miles_at_acquire,
 			b.photo,
 			b.acquire_date,
+			b.retired_at,
 			id
 		)
 		.run();
