@@ -54,7 +54,7 @@ function bikeCard(bike: Bike): string {
 	<div class="plate-head">
 		${photo}
 		<div>
-			<h2 class="plate-name">${esc(bike.name)}${retired ? ' <span class="tag">Retired</span>' : ''}</h2>
+			<h2 class="plate-name">${esc(bike.name)}${retired ? ` <span class="tag">${esc(bike.retirement_type ?? 'retired')}</span>` : ''}</h2>
 			<p class="plate-model">${esc(bike.brand)} ${esc(bike.model)}</p>
 		</div>
 	</div>
@@ -64,80 +64,120 @@ function bikeCard(bike: Bike): string {
 </article>`;
 }
 
-/** The numbers, as a spec sheet — reading them as a sentence felt like data
- * wearing a costume. Fields that don't apply (too new for a per-year figure)
- * are left out rather than shown empty. Total spent carries its own toggle
- * for the breakdown panel, so the cell is built by hand rather than through
- * the generic label/value loop the other fields use. */
+/**
+ * The numbers, as a spec sheet — reading them as a sentence felt like data
+ * wearing a costume. Fields that don't apply (no parts logged, too new for a
+ * per-year figure) are left out rather than shown empty.
+ *
+ * Three grids rather than one, each followed by whatever panels its own row
+ * opens: money summary, then parts and events, then mileage. That keeps a
+ * panel directly under the figure it belongs to, and keeps like with like
+ * instead of filling rows three-at-a-time in whatever order they're built.
+ */
 function specGrid(bike: Bike): string {
 	const miles = milesRidden(bike);
 	const parts = bike.components.reduce((sum, c) => sum + c.cost, 0);
-	const other = bike.events.reduce((sum, e) => sum + e.cost, 0);
-	const total = bike.initial_price + parts + other;
+	const events = bike.events.reduce((sum, e) => sum + e.cost, 0);
+	const total = bike.initial_price + parts + events;
 	const acquired = bike.acquire_date ? day(bike.acquire_date) : null;
 	const perYear = milesPerYear(bike);
-	const hasBreakdown = parts > 0 || other !== 0;
-	const toggleId = `bd-${bike.id}`;
 
-	const cell = (label: string, value: string) =>
-		`<div class="spec"><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`;
+	const money: string[] = [];
+	if (acquired) money.push(cell('Acquired', acquired));
+	money.push(
+		cell(
+			'Total spent',
+			wholeMoney(total),
+			bike.components.length || bike.events.length ? toggle('cost', bike.id) : ''
+		)
+	);
 
-	const totalCell = `<div class="spec">
-		<dt>Total spent</dt>
-		<dd>${wholeMoney(total)}${
-			hasBreakdown
-				? `<input type="checkbox" id="${toggleId}" class="bd-toggle"><label for="${toggleId}" class="bd-btn" aria-hidden="true"></label>`
-				: ''
-		}</dd>
-	</div>`;
-
-	// Split across two grids rather than one, so the breakdown panel can sit
-	// right under the money row instead of below everything — and so money
-	// (Acquired, Total spent) and mileage (Miles, Per mile, Per year) each
-	// get their own line instead of mixing on whichever row has room.
-	const primary: string[] = [];
-	if (acquired) primary.push(cell('Acquired', acquired));
-	primary.push(totalCell);
-
-	const secondary: string[] = [];
-	if (miles > 0) {
-		secondary.push(cell('Miles', miles.toLocaleString()));
-		secondary.push(cell('Per mile', perMileCost(bike)));
-		if (perYear) secondary.push(cell('Per year', perYear.toLocaleString()));
+	const detail: string[] = [];
+	if (bike.components.length) {
+		detail.push(cell('Parts', wholeMoney(parts), toggle('parts', bike.id)));
+	}
+	if (bike.events.length) {
+		detail.push(cell('Events', moneySigned(events), toggle('events', bike.id)));
 	}
 
-	const panel = hasBreakdown ? breakdownPanel(bike.initial_price, parts, other) : '';
-	const secondaryGrid = secondary.length ? `<dl class="specs continued">${secondary.join('')}</dl>` : '';
-	return `<dl class="specs">${primary.join('')}</dl>${panel}${secondaryGrid}`;
+	const mileage: string[] = [];
+	if (miles > 0) {
+		mileage.push(cell('Miles', miles.toLocaleString()));
+		mileage.push(cell('Per mile', perMileCost(bike)));
+		if (perYear) mileage.push(cell('Per year', perYear.toLocaleString()));
+	}
+
+	return [
+		grid(money),
+		bike.components.length || bike.events.length
+			? panel('cost', costRows(bike.initial_price, parts, events))
+			: '',
+		grid(detail, true),
+		bike.components.length ? panel('parts', partRows(bike), wholeMoney(parts)) : '',
+		bike.events.length ? panel('events', eventRows(bike), moneySigned(events)) : '',
+		grid(mileage, true)
+	].join('');
 }
+
+const grid = (cells: string[], continued = false) =>
+	cells.length ? `<dl class="specs${continued ? ' continued' : ''}">${cells.join('')}</dl>` : '';
+
+const cell = (label: string, value: string, extra = '') =>
+	`<div class="spec"><dt>${esc(label)}</dt><dd>${esc(value)}${extra}</dd></div>`;
 
 /**
- * What "Total spent" is made of — the purchase price plus whatever parts and
- * events (repairs, memberships, a sale) added or took back off. A checkbox
- * plus label rather than <details>/<summary>, because the trigger has to sit
- * inline with the dollar figure inside a grid cell, and a <summary> only
- * works as a direct child of <details>. Only called when there's more than
- * one line to show — a breakdown of one number isn't a breakdown.
+ * A checkbox plus label rather than <details>/<summary>, because the trigger
+ * has to sit inline with a figure inside a grid cell, and a <summary> only
+ * works as a direct child of <details>. The kind class is what lets each
+ * toggle open its own panel and no one else's.
  */
-function breakdownPanel(price: number, parts: number, other: number): string {
-	const rows: [string, number][] = [['Price', price]];
-	if (parts > 0) rows.push(['Parts', parts]);
-	if (other !== 0) rows.push(['Other', other]);
+const toggle = (kind: string, bikeId: number) =>
+	`<input type="checkbox" id="${kind}-${bikeId}" class="bd-toggle t-${kind}"><label for="${kind}-${bikeId}" class="bd-btn" aria-hidden="true"></label>`;
 
-	const total = price + parts + other;
-	// Divs, not a table: a per-<td> box-shadow can never look seamless across
-	// a row, because it's two independent boxes each shadowing their own
-	// edges. One flex row is one box, so the "Total" row's shadow has nowhere
-	// to leave a seam.
-	const rowHtml = rows
-		.map(([label, value]) => `<div class="cost-row"><span>${label}</span><span>${moneySigned(value)}</span></div>`)
+/**
+ * Divs, not a table: a per-<td> background can't be styled as one seamless
+ * row, and one flex row is one box. `total` is appended as a summary row when
+ * given, so every panel ends the same way.
+ */
+function panel(kind: string, rows: string, total?: string): string {
+	const summary = total ? `<div class="cost-row total"><span>Total</span><span>${total}</span></div>` : '';
+	return `<div class="bd-panel p-${kind}"><div class="bd-panel-inner"><div class="cost-card">${rows}${summary}</div></div></div>`;
+}
+
+const row = (label: string, value: string, sub = '') =>
+	`<div class="cost-row${sub ? ' item' : ''}"><span>${esc(label)}${sub ? `<em class="sub">${esc(sub)}</em>` : ''}</span><span>${value}</span></div>`;
+
+/** Where "Total spent" came from: the purchase price plus what parts and
+ * events added or, in the case of a sale, took back off. */
+function costRows(price: number, parts: number, events: number): string {
+	const rows = [row('Price', wholeMoney(price))];
+	if (parts !== 0) rows.push(row('Parts', moneySigned(parts)));
+	if (events !== 0) rows.push(row('Events', moneySigned(events)));
+	rows.push(`<div class="cost-row total"><span>Total</span><span>${wholeMoney(price + parts + events)}</span></div>`);
+	return rows.join('');
+}
+
+/** Every aftermarket part, oldest first, with what it cost and when. */
+const partRows = (bike: Bike) =>
+	[...bike.components]
+		.sort((a, b) => a.installation_date - b.installation_date)
+		.map((c) => row(c.name, moneySigned(c.cost), `${c.brand}${when(c.installation_date)}`))
 		.join('');
 
-	return `<div class="bd-panel"><div class="bd-panel-inner"><div class="cost-card">
-		${rowHtml}
-		<div class="cost-row total"><span>Total</span><span>${wholeMoney(total)}</span></div>
-	</div></div></div>`;
-}
+/** Every logged event, oldest first. Plenty of them cost nothing — those are
+ * still worth listing, since the point is what happened, not just the money. */
+const eventRows = (bike: Bike) =>
+	[...bike.events]
+		.sort((a, b) => a.date - b.date)
+		.map((e) => row(e.name, e.cost === 0 ? '—' : moneySigned(e.cost), when(e.date).slice(2)))
+		.join('');
+
+// A handful of rows were logged with a date of 0 rather than left null. That
+// renders as 1970, which reads as a bug rather than as missing history.
+const when = (seconds: number) =>
+	seconds > 0
+		? `, ${new Date(seconds * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' })}`
+		: '';
 
 /** A price, rounded to the dollar — the spec grid is a glance, not a receipt,
  * so cents just add noise. perMileCost stays exact; that one's a rate, not
@@ -186,7 +226,10 @@ function resetEntry(bike: Bike): { note: string | null } | null {
 
 // One hue at four steps, not four hues — reads as one material sliced up
 // rather than a categorical rainbow. Cycles if a fifth bike ever shows up.
-const SHARE_COLORS = ['#5c431c', '#8a6a34', '#b08f52', '#d3bd8d'];
+// Four steps of one hue, not four hues — one material sliced up rather than
+// a categorical rainbow. Kept as classes rather than inline fills so the dark
+// palette can restate them; cycles if a fifth bike ever shows up.
+const SHARE_STEPS = 4;
 
 /** The whole-career mileage split, as a donut plus a legend. Skipped bikes
  * with nothing logged yet — a zero-width slice has nothing to show anyway. */
@@ -207,7 +250,7 @@ function chartPanel(bikes: Bike[]): string {
 		.map((d, i) => {
 			const len = (d.miles / total) * circumference;
 			const dash = `${Math.max(len - gap, 0)} ${circumference}`;
-			const arc = `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${SHARE_COLORS[i % SHARE_COLORS.length]}" stroke-width="22" stroke-dasharray="${dash}" stroke-dashoffset="${(-drawn).toFixed(1)}" transform="rotate(-90 ${c} ${c})"/>`;
+			const arc = `<circle class="arc s${i % SHARE_STEPS}" cx="${c}" cy="${c}" r="${r}" fill="none" stroke-dasharray="${dash}" stroke-dashoffset="${(-drawn).toFixed(1)}" transform="rotate(-90 ${c} ${c})"/>`;
 			drawn += len;
 			return arc;
 		})
@@ -216,7 +259,7 @@ function chartPanel(bikes: Bike[]): string {
 	const legend = data
 		.map(
 			(d, i) => `<li>
-			<span class="swatch" style="background:${SHARE_COLORS[i % SHARE_COLORS.length]}"></span>
+			<span class="swatch s${i % SHARE_STEPS}"></span>
 			<span class="legend-name">${esc(d.name)}</span>
 			<span class="legend-miles">${d.miles.toLocaleString()} mi</span>
 			<span class="legend-pct">${Math.round((d.miles / total) * 100)}%</span>
@@ -237,6 +280,7 @@ function chartPanel(bikes: Bike[]): string {
 
 const STYLE = `
 :root {
+	color-scheme: light dark;
 	--paper: #ede9df;
 	--paper-deep: #e1ddcd;
 	--stripe: #ded8c2;
@@ -244,6 +288,36 @@ const STYLE = `
 	--muted: #6c6a5c;
 	--line: #c9c4b2;
 	--brass: #8a6a34;
+	--sunk: rgba(36, 36, 31, 0.35);
+	--photo: grayscale(65%) contrast(1.05);
+	--photo-retired: grayscale(100%) contrast(1) brightness(0.94);
+	--s0: #5c431c;
+	--s1: #8a6a34;
+	--s2: #b08f52;
+	--s3: #d3bd8d;
+}
+
+/* Same document under lamplight rather than daylight: the paper darkens to a
+   warm graphite, the brass warms up to hold its own against it, and the
+   photos get dimmed — several are bright product shots on white, which glare
+   badly against a dark ground. Everything else is token-driven and follows. */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--paper: #1a1815;
+		--paper-deep: #232019;
+		--stripe: #2c281f;
+		--ink: #ece5d8;
+		--muted: #99917f;
+		--line: #3a352b;
+		--brass: #b98f4e;
+		--sunk: rgba(0, 0, 0, 0.5);
+		--photo: grayscale(65%) contrast(1.02) brightness(0.72);
+		--photo-retired: grayscale(100%) contrast(1) brightness(0.6);
+		--s0: #6b4f24;
+		--s1: #9a7539;
+		--s2: #bd9857;
+		--s3: #ddc79a;
+	}
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -255,7 +329,7 @@ body {
 	line-height: 1.6;
 	-webkit-font-smoothing: antialiased;
 }
-main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
+main { max-width: 940px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
 
 .intro h1 {
 	font-family: "Barlow Condensed", sans-serif;
@@ -266,7 +340,7 @@ main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
 	margin: 0;
 }
 
-.layout { display: grid; grid-template-columns: 1fr; gap: 3rem; align-items: start; margin-top: 3rem; }
+.layout { display: grid; grid-template-columns: 1fr; gap: 2.5rem; align-items: start; margin-top: 2.5rem; }
 @media (min-width: 880px) {
 	.layout { grid-template-columns: minmax(0, 1fr) 300px; }
 }
@@ -278,17 +352,17 @@ main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
 .plate::before, .chart-panel::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
 .plate::after, .chart-panel::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
 
-.plate { padding: 1.75rem 1.5rem 1.5rem; }
-.plate + .plate { margin-top: 2.5rem; }
+.plate { padding: 1.5rem 1.5rem 1.25rem; }
+.plate + .plate { margin-top: 2rem; }
 .plate.retired { opacity: 0.82; }
 
 .plate-head { display: flex; gap: 1.25rem; align-items: flex-start; }
 .plate-photo {
 	width: 220px; height: 130px; flex: none; object-fit: cover;
 	border: 1px solid var(--line); background: var(--paper-deep);
-	filter: grayscale(65%) contrast(1.05);
+	filter: var(--photo);
 }
-.plate-photo.retired { filter: grayscale(100%) contrast(1) brightness(0.94); }
+.plate-photo.retired { filter: var(--photo-retired); }
 .plate-name { font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 1.875rem; line-height: 1; margin: 0; }
 .plate-model { margin: 0.4rem 0 0; color: var(--muted); font-size: 0.9rem; }
 .tag {
@@ -299,15 +373,15 @@ main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
 	border: 1px solid var(--line); padding: 0.15rem 0.5rem;
 }
 
-.plate-note { font-style: italic; margin: 1.1rem 0 0; }
+.plate-note { font-style: italic; margin: 0.9rem 0 0; }
 
-.specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 1.5rem; margin: 1.25rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+.specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem 1.5rem; margin: 1rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--line); }
 @media (min-width: 620px) { .specs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 /* The second half of a split spec grid — picks up right after the panel, so
    it shouldn't repeat the divider that already ran above the first half. */
-.specs.continued { border-top: none; padding-top: 0; }
+.specs.continued { border-top: none; padding-top: 0; margin-top: 0.85rem; }
 .spec dt { margin: 0; font-size: 0.75rem; color: var(--muted); }
-.spec dd { margin: 0.2rem 0 0; font-variant-numeric: tabular-nums; font-size: 0.8125rem; }
+.spec dd { margin: 0.15rem 0 0; font-variant-numeric: tabular-nums; font-size: 0.8125rem; }
 
 /* The "+" sits inline with the dollar figure, inside a grid cell — a
    <summary> can't go there (it only works as a direct child of <details>),
@@ -324,37 +398,51 @@ main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
 	border: 1px solid var(--line); font-size: 0.7em; line-height: 1;
 }
 .bd-btn::before { content: "+"; }
-.plate:has(.bd-toggle:checked) .bd-btn::before { content: "\\2212"; }
+/* Adjacent sibling, not :has() on the card: a card now holds three of these
+   and each one has to answer for its own state. */
+.bd-toggle:checked + .bd-btn::before { content: "\\2212"; }
 .bd-toggle:focus-visible + .bd-btn { outline: 2px solid var(--brass); outline-offset: 2px; }
 
 .bd-panel {
 	display: grid; grid-template-rows: 0fr;
 	/* Negative margins pull it out to the card's own edges — flush with the
 	   border, rather than inset like everything else in the card. */
-	transition: grid-template-rows 280ms ease; margin: 1.1rem -1.5rem 0; perspective: 700px;
+	transition: grid-template-rows 280ms ease; margin: 0 -1.5rem; perspective: 700px;
 }
-.plate:has(.bd-toggle:checked) .bd-panel { grid-template-rows: 1fr; }
 .bd-panel-inner { overflow: hidden; }
 
 .cost-card {
-	background: var(--paper-deep); padding: 0.4rem 0;
-	box-shadow: inset 0 6px 10px -8px rgba(36, 36, 31, 0.35);
+	background: var(--paper-deep); padding: 0.3rem 0; margin-top: 0.85rem;
+	box-shadow: inset 0 6px 10px -8px var(--sunk);
 	transform-origin: top center; transform: rotateX(-24deg); opacity: 0;
 	transition: transform 280ms ease, opacity 200ms ease;
 }
-.plate:has(.bd-toggle:checked) .cost-card { transform: rotateX(0deg); opacity: 1; }
+
+/* Each toggle opens its own panel. The pairs have to be spelled out because
+   the trigger sits up in a grid cell, nowhere near the panel it controls. */
+.plate:has(.t-cost:checked) .p-cost,
+.plate:has(.t-parts:checked) .p-parts,
+.plate:has(.t-events:checked) .p-events { grid-template-rows: 1fr; }
+.plate:has(.t-cost:checked) .p-cost .cost-card,
+.plate:has(.t-parts:checked) .p-parts .cost-card,
+.plate:has(.t-events:checked) .p-events .cost-card { transform: rotateX(0deg); opacity: 1; }
+
 .cost-row {
-	display: flex; justify-content: space-between; align-items: baseline;
-	padding: 0.55rem 1.5rem; font-variant-numeric: tabular-nums; font-size: 0.8125rem;
+	display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+	padding: 0.4rem 1.5rem; font-variant-numeric: tabular-nums; font-size: 0.8125rem;
 }
 .cost-row span:first-child { color: var(--muted); }
+.cost-row.item span:first-child { color: var(--ink); }
+.cost-row span:last-child { white-space: nowrap; }
+.cost-row .sub { font-style: normal; opacity: 0.7; }
+.cost-row .sub::before { content: " "; }
 .cost-row:not(.total):nth-child(even) { background: var(--stripe); }
 .cost-row.total {
-	border-top: 1px solid var(--line); padding-top: 0.75rem; padding-bottom: 0.85rem;
+	border-top: 1px solid var(--line); padding-top: 0.6rem; padding-bottom: 0.65rem;
 	color: var(--ink); font-weight: 600;
 }
 
-.plate-footnote { margin: 1rem 0 0; font-size: 0.875rem; color: var(--muted); }
+.plate-footnote { margin: 0.85rem 0 0; font-size: 0.875rem; color: var(--muted); }
 
 .chart-panel { padding: 1.75rem 1.5rem; }
 .chart-title { margin: 0 0 1.5rem; font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 1.25rem; }
@@ -365,7 +453,12 @@ main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
 .legend { list-style: none; margin: 1.5rem 0 0; padding: 0; }
 .legend li { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.5rem 0; border-top: 1px solid var(--line); font-size: 0.875rem; }
 .legend li:first-child { border-top: none; padding-top: 0; }
+.arc { stroke-width: 22; fill: none; }
 .swatch { width: 10px; height: 10px; flex: none; }
+.s0 { stroke: var(--s0); background: var(--s0); }
+.s1 { stroke: var(--s1); background: var(--s1); }
+.s2 { stroke: var(--s2); background: var(--s2); }
+.s3 { stroke: var(--s3); background: var(--s3); }
 .legend-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .legend-miles, .legend-pct {
 	font-variant-numeric: tabular-nums;
@@ -383,6 +476,6 @@ main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
 	.plate-photo { width: 100%; height: 180px; }
 	/* .bd-panel's flush-edge margin is sized to .plate's own padding, which
 	   shrinks here — it has to match or the panel overshoots the card. */
-	.bd-panel { margin: 1.1rem -1.1rem 0; }
+	.bd-panel { margin: 0 -1.1rem; }
 }
 `;

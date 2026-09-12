@@ -15,6 +15,7 @@ export interface BikeRow {
 	description: string | null;
 	status: string;
 	retired_at: number | null;
+	retirement_type: string | null;
 	created_at: number;
 	updated_at: number;
 }

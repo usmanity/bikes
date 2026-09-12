@@ -159,18 +159,24 @@ async function handleAdmin(request: Request, url: URL, env: Env): Promise<Respon
 			if (!name || !brand || !model || !Number.isFinite(price)) {
 				return new Response('Bad bike', { status: 400 });
 			}
+			// A reason only means something for a bike that has actually left
+			// service, so an active bike drops whatever was posted.
+			const status = str('status') === 'retired' ? 'retired' : 'active';
+			const reason = str('retirement_type');
 			await updateBike(env.DB, bikeId, {
 				name,
 				brand,
 				model,
 				description: str('description') || null,
-				status: str('status') === 'retired' ? 'retired' : 'active',
+				status,
 				bike_type: str('bike_type') || 'road',
 				initial_price: price,
 				miles_at_acquire: Number.isFinite(num('miles_at_acquire')) ? num('miles_at_acquire') : 0,
 				photo: str('photo') || null,
 				acquire_date: acquired ? Math.floor(Date.parse(acquired + 'T00:00:00Z') / 1000) : null,
-				retired_at: retired ? Math.floor(Date.parse(retired + 'T00:00:00Z') / 1000) : null
+				retired_at: retired ? Math.floor(Date.parse(retired + 'T00:00:00Z') / 1000) : null,
+				retirement_type:
+					status === 'retired' && RETIREMENT_TYPES.includes(reason) ? reason : null
 			});
 			break;
 		}
@@ -228,3 +234,6 @@ async function handlePhotoUpload(
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 
 const DELETABLE_KINDS: Deletable[] = ['component', 'event', 'mileage'];
+
+/** How a bike left service. Anything else posted is stored as no reason. */
+const RETIREMENT_TYPES = ['sold', 'stolen', 'crashed', 'given away', 'worn out'];

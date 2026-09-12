@@ -77,7 +77,7 @@ check "bad status fell back"  "$(npx wrangler d1 execute bikes --local --json --
 # column, so any field the list forgets gets silently blanked.
 node -e "
 const b=JSON.parse(process.argv[1]);
-const cols=['name','brand','model','description','status','bike_type','initial_price','miles_at_acquire','photo','acquire_date'];
+const cols=['name','brand','model','description','status','bike_type','initial_price','miles_at_acquire','photo','acquire_date','retired_at','retirement_type'];
 const lit=v=>v===null||v===undefined?'NULL':typeof v==='number'?v:\"'\"+String(v).replace(/'/g,\"''\")+\"'\";
 console.log('UPDATE bikes SET '+cols.map(c=>c+'='+lit(b[c])).join(', ')+' WHERE id=1;')" "$BEFORE_ROW" > /tmp/bikes-restore.sql
 npx wrangler d1 execute bikes --local --yes --file=/tmp/bikes-restore.sql >/dev/null 2>&1

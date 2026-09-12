@@ -77,13 +77,15 @@ export interface BikeEdit {
 	photo: string | null;
 	acquire_date: number | null;
 	retired_at: number | null;
+	retirement_type: string | null;
 }
 
 export function updateBike(db: D1Database, id: number, b: BikeEdit) {
 	return db
 		.prepare(
 			`UPDATE bikes SET name=?, brand=?, model=?, description=?, status=?, bike_type=?,
-			 initial_price=?, miles_at_acquire=?, photo=?, acquire_date=?, retired_at=?, updated_at=unixepoch()
+			 initial_price=?, miles_at_acquire=?, photo=?, acquire_date=?, retired_at=?,
+			 retirement_type=?, updated_at=unixepoch()
 			 WHERE id=?`
 		)
 		.bind(
@@ -98,6 +100,7 @@ export function updateBike(db: D1Database, id: number, b: BikeEdit) {
 			b.photo,
 			b.acquire_date,
 			b.retired_at,
+			b.retirement_type,
 			id
 		)
 		.run();

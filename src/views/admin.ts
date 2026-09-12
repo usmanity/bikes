@@ -42,7 +42,7 @@ export function adminPanel(bikes: Bike[], current: Bike, k: string): string {
 			<div class="min-w-0">
 				<div class="flex items-baseline gap-2">
 					<h1 class="truncate text-xl font-semibold tracking-tight">${esc(current.name)}</h1>
-					<span class="shrink-0 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] capitalize ${MUTED}">${esc(current.status)}</span>
+					<span class="shrink-0 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] capitalize ${MUTED}">${esc(current.retirement_type ?? current.status)}</span>
 				</div>
 				<p class="mt-1 text-sm ${MUTED}">${esc(current.brand)} ${esc(current.model)}</p>
 				${current.description ? `<p class="mt-2 text-sm ${MUTED}">${esc(current.description)}</p>` : ''}
@@ -95,7 +95,9 @@ export function adminPanel(bikes: Bike[], current: Bike, k: string): string {
 		field('miles_at_acquire', 'Miles at acquisition', 'number', { step: 'any', inputmode: 'decimal', value: String(current.miles_at_acquire) }) +
 		field('photo', 'Photo path', 'text', { value: current.photo ?? '' }) +
 		field('acquire_date', 'Acquired', 'date', { value: isoDay(current.acquire_date) }) +
-		field('retired_at', 'Retired', 'date', { value: isoDay(current.retired_at) }))}
+		field('retired_at', 'Retired', 'date', { value: isoDay(current.retired_at) }) +
+		select('retirement_type', 'Reason (if retired)',
+			['', 'sold', 'stolen', 'crashed', 'given away', 'worn out'], current.retirement_type ?? ''))}
 
 	${sheet('mileage-dlg', 'Log mileage', `/update/mileage${q}`, hx,
 		field('miles', 'Odometer reading', 'number', { step: 'any', required: true, inputmode: 'decimal' }) +
