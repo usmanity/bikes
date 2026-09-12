@@ -92,14 +92,16 @@ function specGrid(bike: Bike): string {
 	</div>`;
 
 	// Split across two grids rather than one, so the breakdown panel can sit
-	// right under the row that holds Total spent instead of below everything.
+	// right under the money row instead of below everything — and so money
+	// (Acquired, Total spent) and mileage (Miles, Per mile, Per year) each
+	// get their own line instead of mixing on whichever row has room.
 	const primary: string[] = [];
 	if (acquired) primary.push(cell('Acquired', acquired));
 	primary.push(totalCell);
-	if (miles > 0) primary.push(cell('Miles', miles.toLocaleString()));
 
 	const secondary: string[] = [];
 	if (miles > 0) {
+		secondary.push(cell('Miles', miles.toLocaleString()));
 		secondary.push(cell('Per mile', perMileCost(bike)));
 		if (perYear) secondary.push(cell('Per year', perYear.toLocaleString()));
 	}
