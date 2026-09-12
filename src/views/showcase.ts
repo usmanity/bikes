@@ -379,5 +379,8 @@ main { max-width: 940px; margin: 0 auto; padding: 4rem 1.25rem 5rem; }
 	.plate { padding: 1.25rem 1.1rem; }
 	.plate-head { flex-direction: column; }
 	.plate-photo { width: 100%; height: 180px; }
+	/* .bd-panel's flush-edge margin is sized to .plate's own padding, which
+	   shrinks here — it has to match or the panel overshoots the card. */
+	.bd-panel { margin: 1.1rem -1.1rem 0; }
 }
 `;
