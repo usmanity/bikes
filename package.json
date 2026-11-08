@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "css": "tailwindcss -i src/app.css -o public/app.css",
-    "dev": "npm run css && wrangler dev",
+    "dev": "npm run css && wrangler dev --port 8790",
     "build": "npm run css --minify",
     "deploy": "npm run css -- --minify && wrangler deploy",
     "typecheck": "tsc --noEmit",
