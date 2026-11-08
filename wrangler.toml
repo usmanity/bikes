@@ -13,3 +13,8 @@ binding = "DB"
 database_name = "bikes"
 database_id = "d492ca2e-7e71-4c1f-9843-28c962ac53e5"
 migrations_dir = "migrations"
+
+# Reads and writes go to the bikes database in the data hub on abbey (src/db/hub.ts), with the
+# HUB_TOKEN secret. Remove this to go back to the D1 database above, which is kept as-is.
+[vars]
+HUB_URL = "https://abbey.usmanity.com/data"
