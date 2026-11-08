@@ -1,3 +1,4 @@
+import { hubDatabase } from './db/hub.ts';
 import { listBikes, exportAll, readPhoto } from './db/read.ts';
 import {
 	addMileage,
@@ -18,15 +19,34 @@ export interface Env {
 	DB: D1Database;
 	ADMIN_TOKEN: string;
 	ASSETS: Fetcher;
+	/** Set to keep the data in the hub on abbey instead of D1 (see README, "Storage"). */
+	HUB_URL?: string;
+	HUB_TOKEN?: string;
 }
 
 export default {
 	async fetch(request, env) {
-		return await handle(request, env).catch(
+		return await handle(request, withStore(request, env)).catch(
 			(err) => new Response((err as Error).stack, { status: 500 })
 		);
 	}
 } satisfies ExportedHandler<Env>;
+
+/**
+ * With HUB_URL set, every read and write goes to the bikes database in the hub on abbey and the
+ * D1 binding is left alone (it stays bound so rolling back is just unsetting HUB_URL).
+ */
+function withStore(request: Request, env: Env): Env {
+	if (!env.HUB_URL) return env;
+	if (!env.HUB_TOKEN) throw new Error('HUB_URL is set but the HUB_TOKEN secret is missing');
+	const DB = hubDatabase({
+		url: env.HUB_URL,
+		app: 'bikes',
+		token: env.HUB_TOKEN,
+		cacheOrigin: new URL(request.url).origin
+	});
+	return { ...env, DB };
+}
 
 const notFound = () => new Response('Not found', { status: 404 });
 

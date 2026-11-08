@@ -13,6 +13,8 @@
     "smoke": "./smoke.sh",
     "migrate:local": "wrangler d1 migrations apply bikes --local",
     "migrate": "wrangler d1 migrations apply bikes --remote",
+    "migrate:hub": "node scripts/migrate-hub.mjs",
+    "copy:hub": "node scripts/copy-d1-to-hub.mjs",
     "format": "prettier --write ."
   },
   "devDependencies": {

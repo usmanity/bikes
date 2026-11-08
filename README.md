@@ -23,6 +23,20 @@ its forms and deletes.
 may later go elsewhere; when that happens `write.ts` is the only file that
 should need to change.
 
+## Storage
+
+By default the data lives in D1. With `HUB_URL` set (a var) plus a `HUB_TOKEN` secret, every read
+and write goes to the `bikes` database in the personal data hub on abbey instead
+(`usmanity/data`, `POST /api/apps/bikes/query`). `src/db/hub.ts` stands in for the D1 binding, so
+`read.ts` and `write.ts` don't change. Reads fall back to a cached copy when the hub can't be
+reached, so the public page stays up; writes fail until it's back. Unsetting `HUB_URL` returns to D1.
+
+The hub token needs `bikes:read bikes:write` (create it on abbey with the hub's `npm run token:create`).
+Keep it in `.hub.vars` (gitignored) as `HUB_URL=...` and `HUB_TOKEN=...` for the scripts:
+
+- `npm run migrate:hub` applies `migrations/` to the hub copy (tracked in `d1_migrations`, like wrangler).
+- `npm run copy:hub` copies every row from D1 into an empty hub copy, ids intact (one-off).
+
 ## Routes
 
 - `/` — the public list. Server-rendered, ships no JavaScript.
